@@ -57,9 +57,30 @@
                 linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
             background-size: 40px 40px;
+            z-index: 0;
         }
 
-        .panel-left > * { position: relative; z-index: 1; }
+        /* ── Frosted glass edge on the right side ── */
+        .panel-left::after {
+            content: '';
+            position: absolute;
+            top: 0; right: 0; bottom: 0;
+            width: 80px;
+            background: linear-gradient(
+                to right,
+                rgba(255,255,255,0)    0%,
+                rgba(255,255,255,0.06) 40%,
+                rgba(255,255,255,0.18) 75%,
+                rgba(255,255,255,0.28) 100%
+            );
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-left: 1px solid rgba(255,255,255,0.15);
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .panel-left > * { position: relative; z-index: 3; }
 
         .brand {
             display: flex;
