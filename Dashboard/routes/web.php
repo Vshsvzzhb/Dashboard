@@ -17,46 +17,51 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// ── Dashboard ────────────────────────────────────────────────────────────────
-Route::get('/', [DashboardController::class, 'index']);
-Route::get('/wa-status', [DashboardController::class, 'waStatus']);
+// ── Protected App Routes ──────────────────────────────────────────────────────
+Route::middleware('auth')->group(function () {
 
-// ── Blast History ────────────────────────────────────────────────────────────
-Route::get('/blast-history', [BlastHistoryController::class, 'index']);
-Route::get('/blast-history/{blast}', [BlastHistoryController::class, 'show']);
+    // Dashboard
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/wa-status', [DashboardController::class, 'waStatus']);
 
-// ── Phonebook ────────────────────────────────────────────────────────────────
-Route::get('/phonebook', [ContactController::class, 'index']);
-Route::get('/phonebook/show/{label}', [ContactController::class, 'show']);
-Route::post('/phonebook/fetch-wa', [ContactController::class, 'fetchWaGroups']);
-Route::post('/phonebook', [ContactController::class, 'store']);
-Route::delete('/phonebook/{contact}', [ContactController::class, 'destroy']);
+    // Blast History
+    Route::get('/blast-history', [BlastHistoryController::class, 'index']);
+    Route::get('/blast-history/{blast}', [BlastHistoryController::class, 'show']);
 
-// ── Campaigns ────────────────────────────────────────────────────────────────
-Route::get('/campaigns', [CampaignController::class, 'index']);
-Route::post('/campaigns', [CampaignController::class, 'store']);
-Route::post('/campaigns/{campaign}/status', [CampaignController::class, 'updateStatus']);
-Route::delete('/campaigns/{campaign}', [CampaignController::class, 'destroy']);
+    // Phonebook
+    Route::get('/phonebook', [ContactController::class, 'index']);
+    Route::get('/phonebook/show/{label}', [ContactController::class, 'show']);
+    Route::post('/phonebook/fetch-wa', [ContactController::class, 'fetchWaGroups']);
+    Route::post('/phonebook', [ContactController::class, 'store']);
+    Route::delete('/phonebook/{contact}', [ContactController::class, 'destroy']);
 
-// ── WA Groups ────────────────────────────────────────────────────────────────
-Route::get('/wa-groups', [App\Http\Controllers\WaGroupController::class, 'index']);
-Route::post('/wa-groups/fetch', [App\Http\Controllers\WaGroupController::class, 'fetch']);
-Route::post('/wa-groups/extract', [App\Http\Controllers\WaGroupController::class, 'extractContacts']);
+    // Campaigns
+    Route::get('/campaigns', [CampaignController::class, 'index']);
+    Route::post('/campaigns', [CampaignController::class, 'store']);
+    Route::post('/campaigns/{campaign}/status', [CampaignController::class, 'updateStatus']);
+    Route::delete('/campaigns/{campaign}', [CampaignController::class, 'destroy']);
 
-// ── Settings ─────────────────────────────────────────────────────────────────
-Route::get('/settings', [SettingController::class, 'index']);
-Route::post('/settings', [SettingController::class, 'save']);
+    // WA Groups
+    Route::get('/wa-groups', [App\Http\Controllers\WaGroupController::class, 'index']);
+    Route::post('/wa-groups/fetch', [App\Http\Controllers\WaGroupController::class, 'fetch']);
+    Route::post('/wa-groups/extract', [App\Http\Controllers\WaGroupController::class, 'extractContacts']);
 
-// ── Quick Blast ───────────────────────────────────────────────────────────────
-Route::get('/quick-blast', [QuickBlastController::class, 'index']);
-Route::post('/quick-blast', [QuickBlastController::class, 'send']);
+    // Settings
+    Route::get('/settings', [SettingController::class, 'index']);
+    Route::post('/settings', [SettingController::class, 'save']);
 
-// ── WebRTC Softphone ──────────────────────────────────────────────────────────
-Route::get('/webrtc', function () {
-    return view('webrtc');
+    // Quick Blast
+    Route::get('/quick-blast', [QuickBlastController::class, 'index']);
+    Route::post('/quick-blast', [QuickBlastController::class, 'send']);
+
+    // WebRTC Softphone
+    Route::get('/webrtc', function () {
+        return view('webrtc');
+    });
+
+    // TTS Call
+    Route::post('/tts-call', [TtsCallController::class, 'call']);
 });
 
-// ── TTS Call — Originate call dari Asterisk AMI langsung ─────────────────────
-Route::post('/tts-call', [TtsCallController::class, 'call']);
 
 require __DIR__.'/auth.php';
