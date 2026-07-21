@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\CampaignController;
@@ -9,44 +10,53 @@ use App\Http\Controllers\QuickBlastController;
 use App\Http\Controllers\TtsCallController;
 use App\Http\Controllers\BlastHistoryController;
 
-// Dashboard
+// ── Auth (from Breeze) ───────────────────────────────────────────────────────
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+// ── Dashboard ────────────────────────────────────────────────────────────────
 Route::get('/', [DashboardController::class, 'index']);
 Route::get('/wa-status', [DashboardController::class, 'waStatus']);
 
-// Blast History
+// ── Blast History ────────────────────────────────────────────────────────────
 Route::get('/blast-history', [BlastHistoryController::class, 'index']);
 Route::get('/blast-history/{blast}', [BlastHistoryController::class, 'show']);
 
-// Phonebook
+// ── Phonebook ────────────────────────────────────────────────────────────────
 Route::get('/phonebook', [ContactController::class, 'index']);
 Route::get('/phonebook/show/{label}', [ContactController::class, 'show']);
 Route::post('/phonebook/fetch-wa', [ContactController::class, 'fetchWaGroups']);
 Route::post('/phonebook', [ContactController::class, 'store']);
 Route::delete('/phonebook/{contact}', [ContactController::class, 'destroy']);
 
-// Campaigns
+// ── Campaigns ────────────────────────────────────────────────────────────────
 Route::get('/campaigns', [CampaignController::class, 'index']);
 Route::post('/campaigns', [CampaignController::class, 'store']);
 Route::post('/campaigns/{campaign}/status', [CampaignController::class, 'updateStatus']);
 Route::delete('/campaigns/{campaign}', [CampaignController::class, 'destroy']);
 
-// WA Groups
+// ── WA Groups ────────────────────────────────────────────────────────────────
 Route::get('/wa-groups', [App\Http\Controllers\WaGroupController::class, 'index']);
 Route::post('/wa-groups/fetch', [App\Http\Controllers\WaGroupController::class, 'fetch']);
 Route::post('/wa-groups/extract', [App\Http\Controllers\WaGroupController::class, 'extractContacts']);
 
-// Settings
+// ── Settings ─────────────────────────────────────────────────────────────────
 Route::get('/settings', [SettingController::class, 'index']);
 Route::post('/settings', [SettingController::class, 'save']);
 
-// Quick Blast
+// ── Quick Blast ───────────────────────────────────────────────────────────────
 Route::get('/quick-blast', [QuickBlastController::class, 'index']);
 Route::post('/quick-blast', [QuickBlastController::class, 'send']);
 
-// WebRTC Softphone
+// ── WebRTC Softphone ──────────────────────────────────────────────────────────
 Route::get('/webrtc', function () {
     return view('webrtc');
 });
 
-// TTS Call — Originate call dari Asterisk AMI langsung
+// ── TTS Call — Originate call dari Asterisk AMI langsung ─────────────────────
 Route::post('/tts-call', [TtsCallController::class, 'call']);
+
+require __DIR__.'/auth.php';

@@ -1,105 +1,36 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>WAGateway 2026</title>
-    <link rel="stylesheet" href="{{ asset('css/style.css') }}">
-    <script src="https://unpkg.com/lucide@latest"></script>
-</head>
-<body>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <div class="layout-container">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <div class="logo-icon">
-                    <i data-lucide="zap" style="color: white; width: 22px; height: 22px;"></i>
-                </div>
-                <span>WAGateway</span>
-            </div>
-            
-            <nav class="sidebar-nav">
-                <a href="/" class="nav-item {{ request()->is('/') ? 'active' : '' }}">
-                    <i data-lucide="layout-dashboard" style="width: 22px; height: 22px;"></i>
-                    <span>Dashboard</span>
-                </a>
-                <a href="/phonebook" class="nav-item {{ request()->is('phonebook') ? 'active' : '' }}">
-                    <i data-lucide="users" style="width: 22px; height: 22px;"></i>
-                    <span>Phonebook</span>
-                </a>
-                <a href="/campaigns" class="nav-item {{ request()->is('campaigns') ? 'active' : '' }}">
-                    <i data-lucide="radio" style="width: 22px; height: 22px;"></i>
-                    <span>Campaigns</span>
-                </a>
-                <a href="/wa-groups" class="nav-item {{ request()->is('wa-groups') ? 'active' : '' }}">
-                    <i data-lucide="users-2" style="width: 22px; height: 22px;"></i>
-                    <span>WA Groups</span>
-                </a>
-                <a href="/quick-blast" class="nav-item {{ request()->is('quick-blast') ? 'active' : '' }}" style="{{ request()->is('quick-blast') ? '' : 'position:relative;' }}">
-                    <i data-lucide="zap" style="width: 22px; height: 22px;"></i>
-                    <span>Quick Blast</span>
-                    <span style="margin-left: auto; background: var(--accent-orange); color: #fff; font-size: 0.65rem; font-weight: 800; padding: 4px 8px; border-radius: 8px; text-transform: uppercase; letter-spacing: 0.5px;">NEW</span>
-                </a>
-                <a href="/blast-history" class="nav-item {{ request()->is('blast-history*') ? 'active' : '' }}">
-                    <i data-lucide="history" style="width: 22px; height: 22px;"></i>
-                    <span>Blast History</span>
-                </a>
-                <a href="/webrtc" class="nav-item {{ request()->is('webrtc') ? 'active' : '' }}">
-                    <i data-lucide="phone-call" style="width: 22px; height: 22px;"></i>
-                    <span>WebRTC Phone</span>
-                </a>
-                <div style="flex: 1;"></div>
-                <a href="/settings" class="nav-item {{ request()->is('settings') ? 'active' : '' }}">
-                    <i data-lucide="settings" style="width: 22px; height: 22px;"></i>
-                    <span>Settings</span>
-                </a>
-            </nav>
-        </aside>
+        <title>{{ config('app.name', 'Laravel') }}</title>
 
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Header -->
-            <header class="top-header">
-                <div class="header-left">
-                    <!-- Space for breadcrumbs or context -->
-                </div>
-                
-                <div class="header-right" style="display: flex; gap: 24px; align-items: center;">
-                    <div class="server-status" id="server-status-btn">
-                        <div class="status-indicator"></div>
-                        <span>Live Sync</span>
+        <!-- Fonts -->
+        <link rel="preconnect" href="https://fonts.bunny.net">
+        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+
+        <!-- Scripts -->
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+    </head>
+    <body class="font-sans antialiased">
+        <div class="min-h-screen bg-gray-100">
+            @include('layouts.navigation')
+
+            <!-- Page Heading -->
+            @isset($header)
+                <header class="bg-white shadow">
+                    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+                        {{ $header }}
                     </div>
-                    
-                    <div class="admin-badge" title="Super User Profile">
-                        SU
-                    </div>
-                </div>
-            </header>
+                </header>
+            @endisset
 
             <!-- Page Content -->
-            @yield('content')
-        </main>
-    </div>
-
-    <script>
-        // Initialize Lucide icons
-        lucide.createIcons();
-
-        // Server status toggle animation
-        const statusBtn = document.getElementById('server-status-btn');
-        let isConnected = true;
-        statusBtn.addEventListener('click', () => {
-            isConnected = !isConnected;
-            if(isConnected) {
-                statusBtn.classList.remove('disconnected');
-                statusBtn.querySelector('span').innerText = 'LIVE SYNC';
-            } else {
-                statusBtn.classList.add('disconnected');
-                statusBtn.querySelector('span').innerText = 'OFFLINE';
-            }
-        });
-    </script>
-</body>
+            <main>
+                {{ $slot }}
+            </main>
+        </div>
+    </body>
 </html>

@@ -35,8 +35,8 @@ class TtsCallController extends Controller
         $target = $request->input('target');
         $lang   = $request->input('lang', $this->ttsLang);
 
-        // Step 1 — Format text (di-urlencode agar spasi aman dikirim via AMI)
-        $encodedText = urlencode($text);
+        // Step 1 — Format text (jangan di-urlencode agar tidak dibaca sebagai angka/simbol oleh TTS)
+        $encodedText = $text;
 
         // Step 2 — Kirim Originate ke Asterisk via AMI
         try {
