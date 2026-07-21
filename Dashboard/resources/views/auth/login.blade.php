@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Sign In — WAGateway</title>
+    <title>Sign In — VetenCall</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -351,7 +351,7 @@
             <div class="brand-icon">
                 <i data-lucide="zap" style="color:#fff;width:20px;height:20px;"></i>
             </div>
-            <span class="brand-name">WAGateway</span>
+            <span class="brand-name">VetenCall</span>
         </div>
 
         <div class="panel-headline">
@@ -443,7 +443,7 @@
         </div>
 
         <div class="form-footer" style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border); font-size: 0.78rem; color: var(--muted); text-align: center;">
-            WAGateway 2026 &nbsp;·&nbsp; Internal Access Only
+            VetenCall 2026 &nbsp;·&nbsp; Internal Access Only
         </div>
 
     </div>

@@ -91,7 +91,7 @@
                         </div>
                         <div>
                             <label style="display: block; margin-bottom: 10px; color: var(--text-secondary); font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">Application Name</label>
-                            <input type="text" name="app_name" value="{{ $settings['app_name'] ?? 'WAGateway' }}" placeholder="WAGateway"
+                            <input type="text" name="app_name" value="{{ $settings['app_name'] ?? 'VetenCall' }}" placeholder="VetenCall"
                                 style="width: 100%; background: #ffffff; border: 2px solid var(--surface-border); border-radius: 14px; padding: 16px 20px; color: var(--text-primary); outline: none; font-family: inherit; font-size: 1rem; font-weight: 600; transition: all 0.3s;"
                                 onfocus="this.style.borderColor='var(--primary)'; this.style.boxShadow='0 0 0 4px rgba(67, 24, 255, 0.1)';" onblur="this.style.borderColor='var(--surface-border)'; this.style.boxShadow='none';">
                         </div>

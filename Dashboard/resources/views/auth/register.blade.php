@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Sign Up — WAGateway</title>
+    <title>Sign Up — VetenCall</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -300,7 +300,7 @@
             <div class="brand-icon">
                 <i data-lucide="zap" style="color:#fff;width:20px;height:20px;"></i>
             </div>
-            <span class="brand-name">WAGateway</span>
+            <span class="brand-name">VetenCall</span>
         </div>
 
         <div class="panel-headline">
@@ -332,7 +332,7 @@
         </div>
 
         <h2 class="form-title">Get Started</h2>
-        <p class="form-subtitle">Register for a new WAGateway account</p>
+        <p class="form-subtitle">Register for a new VetenCall account</p>
 
         @if ($errors->any())
             <div class="alert alert-error">
