@@ -65,37 +65,6 @@
 
         .panel-left > * { position: relative; z-index: 1; }
 
-        /* ── Seam overlay — sits at the boundary between both panels ── */
-        .seam-overlay {
-            position: fixed;
-            top: 0;
-            bottom: 0;
-            right: 460px; /* matches .panel-right width */
-            width: 64px;
-            transform: translateX(50%);
-            z-index: 50;
-            pointer-events: none;
-
-            /* blurred glass strip */
-            backdrop-filter: blur(14px) saturate(1.6);
-            -webkit-backdrop-filter: blur(14px) saturate(1.6);
-
-            /* gradient so it fades out left & right, opaque at center */
-            background: linear-gradient(
-                to right,
-                rgba(255,255,255,0)    0%,
-                rgba(255,255,255,0.12) 30%,
-                rgba(255,255,255,0.22) 50%,
-                rgba(255,255,255,0.12) 70%,
-                rgba(255,255,255,0)    100%
-            );
-
-            /* subtle sheen line at the very center */
-            border-left: none;
-            border-right: none;
-            box-shadow: inset 1px 0 0 rgba(255,255,255,0.35), inset -1px 0 0 rgba(255,255,255,0.12);
-        }
-
         .brand {
             display: flex;
             align-items: center;
@@ -384,9 +353,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Frosted Glass Seam -->
-    <div class="seam-overlay" aria-hidden="true"></div>
 
     <!-- Right Panel -->
     <div class="panel-right">
