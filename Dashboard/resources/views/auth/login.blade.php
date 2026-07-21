@@ -34,9 +34,6 @@
         }
 
         /* ── Left panel — illustration / brand ── */
-        /* ── Layout wrapper must be relative for seam ── */
-        body { position: relative; }
-
         .panel-left {
             flex: 1;
             background: var(--primary);
@@ -134,6 +131,7 @@
 
         /* ── Right panel — form ── */
         .panel-right {
+            position: relative;
             width: 460px;
             flex-shrink: 0;
             background: var(--surface);
@@ -142,6 +140,29 @@
             justify-content: center;
             padding: 64px 56px;
             border-left: 1px solid var(--border);
+        }
+
+        /* ── Seam overlay — sits at the boundary exactly ── */
+        .panel-right::before {
+            content: '';
+            position: absolute;
+            top: 0; bottom: 0; left: 0;
+            width: 64px;
+            transform: translateX(-50%);
+            z-index: 50;
+            pointer-events: none;
+
+            backdrop-filter: blur(14px) saturate(1.6);
+            -webkit-backdrop-filter: blur(14px) saturate(1.6);
+
+            background: linear-gradient(
+                to right,
+                rgba(255,255,255,0)    0%,
+                rgba(255,255,255,0.12) 30%,
+                rgba(255,255,255,0.22) 50%,
+                rgba(255,255,255,0.12) 70%,
+                rgba(255,255,255,0)    100%
+            );
         }
 
         .form-eyebrow {
