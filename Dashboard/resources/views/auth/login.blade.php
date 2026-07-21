@@ -438,7 +438,11 @@
             </button>
         </form>
 
-        <div class="form-footer">
+        <div class="auth-links" style="text-align: center; margin-top: 24px; font-size: 0.85rem; color: var(--muted);">
+            Don't have an account? <a href="{{ route('register') }}" style="color: var(--primary); font-weight: 600; text-decoration: none;">Sign up here</a>
+        </div>
+
+        <div class="form-footer" style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border); font-size: 0.78rem; color: var(--muted); text-align: center;">
             WAGateway 2026 &nbsp;·&nbsp; Internal Access Only
         </div>
 
