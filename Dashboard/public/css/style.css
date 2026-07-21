@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Poppins:wght@700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Fredoka:wght@700&display=swap');
 
 :root {
   --primary:        #4318FF;
@@ -55,7 +55,7 @@ body {
   gap: 10px;
   font-size: 1.25rem;
   font-weight: 800;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Fredoka', sans-serif;
   color: var(--text-primary);
   padding: 0 8px;
   letter-spacing: -0.5px;
