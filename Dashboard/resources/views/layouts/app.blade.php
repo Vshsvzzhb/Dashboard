@@ -55,6 +55,14 @@
                     <i data-lucide="settings" style="width: 22px; height: 22px;"></i>
                     <span>Settings</span>
                 </a>
+                
+                <form method="POST" action="{{ route('logout') }}" style="margin-top: 4px;">
+                    @csrf
+                    <button type="submit" class="nav-item" style="width: 100%; border: none; background: transparent; cursor: pointer; text-align: left; font-family: inherit;">
+                        <i data-lucide="log-out" style="width: 22px; height: 22px; color: #DC2626;"></i>
+                        <span style="color: #DC2626; font-weight: 700;">Log Out</span>
+                    </button>
+                </form>
             </nav>
         </aside>
 
