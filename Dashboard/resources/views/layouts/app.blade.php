@@ -14,8 +14,8 @@
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-header">
-                <div class="logo-icon">
-                    <i data-lucide="zap" style="color: white; width: 22px; height: 22px;"></i>
+                <div class="logo-icon" style="background: transparent; border: none; width: 28px; height: 28px;">
+                    <img src="{{ asset('images/logo.png') }}" alt="VetenCall" style="width: 100%; height: 100%; object-fit: contain;">
                 </div>
                 <span>VetenCall</span>
             </div>

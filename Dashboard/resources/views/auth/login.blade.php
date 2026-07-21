@@ -348,8 +348,8 @@
     <!-- Left Panel -->
     <div class="panel-left">
         <div class="brand">
-            <div class="brand-icon">
-                <i data-lucide="zap" style="color:#fff;width:20px;height:20px;"></i>
+            <div class="brand-icon" style="background: transparent; border: none; width: 48px; height: 48px;">
+                <img src="{{ asset('images/logo.png') }}" alt="VetenCall" style="width: 100%; height: 100%; object-fit: contain;">
             </div>
             <span class="brand-name">VetenCall</span>
         </div>
