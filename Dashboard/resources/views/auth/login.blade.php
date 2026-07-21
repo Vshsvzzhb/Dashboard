@@ -348,7 +348,7 @@
     <!-- Left Panel -->
     <div class="panel-left">
         <div class="brand">
-            <div class="brand-icon" style="background: transparent; border: none; width: 48px; height: 48px;">
+            <div class="brand-icon" style="background: #ffffff; border-radius: 14px; padding: 10px; width: 52px; height: 52px; box-shadow: 0 0 30px rgba(255,255,255,0.3); border: none;">
                 <img src="{{ asset('images/VetenCall.png') }}" alt="VetenCall" style="width: 100%; height: 100%; object-fit: contain;">
             </div>
             <span class="brand-name">VetenCall</span>
