@@ -1,0 +1,52 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ContactController;
+use App\Http\Controllers\CampaignController;
+use App\Http\Controllers\SettingController;
+use App\Http\Controllers\QuickBlastController;
+use App\Http\Controllers\TtsCallController;
+use App\Http\Controllers\BlastHistoryController;
+
+// Dashboard
+Route::get('/', [DashboardController::class, 'index']);
+Route::get('/wa-status', [DashboardController::class, 'waStatus']);
+
+// Blast History
+Route::get('/blast-history', [BlastHistoryController::class, 'index']);
+Route::get('/blast-history/{blast}', [BlastHistoryController::class, 'show']);
+
+// Phonebook
+Route::get('/phonebook', [ContactController::class, 'index']);
+Route::get('/phonebook/show/{label}', [ContactController::class, 'show']);
+Route::post('/phonebook/fetch-wa', [ContactController::class, 'fetchWaGroups']);
+Route::post('/phonebook', [ContactController::class, 'store']);
+Route::delete('/phonebook/{contact}', [ContactController::class, 'destroy']);
+
+// Campaigns
+Route::get('/campaigns', [CampaignController::class, 'index']);
+Route::post('/campaigns', [CampaignController::class, 'store']);
+Route::post('/campaigns/{campaign}/status', [CampaignController::class, 'updateStatus']);
+Route::delete('/campaigns/{campaign}', [CampaignController::class, 'destroy']);
+
+// WA Groups
+Route::get('/wa-groups', [App\Http\Controllers\WaGroupController::class, 'index']);
+Route::post('/wa-groups/fetch', [App\Http\Controllers\WaGroupController::class, 'fetch']);
+Route::post('/wa-groups/extract', [App\Http\Controllers\WaGroupController::class, 'extractContacts']);
+
+// Settings
+Route::get('/settings', [SettingController::class, 'index']);
+Route::post('/settings', [SettingController::class, 'save']);
+
+// Quick Blast
+Route::get('/quick-blast', [QuickBlastController::class, 'index']);
+Route::post('/quick-blast', [QuickBlastController::class, 'send']);
+
+// WebRTC Softphone
+Route::get('/webrtc', function () {
+    return view('webrtc');
+});
+
+// TTS Call — Originate call dari Asterisk AMI langsung
+Route::post('/tts-call', [TtsCallController::class, 'call']);
