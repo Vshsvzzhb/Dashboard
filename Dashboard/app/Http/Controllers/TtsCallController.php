@@ -35,8 +35,8 @@ class TtsCallController extends Controller
         $target = $request->input('target');
         $lang   = $request->input('lang', $this->ttsLang);
 
-        // Step 1 — Format text (jangan di-urlencode agar tidak dibaca sebagai angka/simbol oleh TTS)
-        $encodedText = $text;
+        // Decode in case the input was URL-encoded (prevents reading %20 as 'persen')
+        $encodedText = urldecode($text);
 
         // Step 2 — Kirim Originate ke Asterisk via AMI
         try {
@@ -88,7 +88,11 @@ class TtsCallController extends Controller
         $varLines = '';
         foreach ($variables as $k => $v) {
             if ($v !== '') {
-                $varLines .= "Variable: {$k}=" . str_replace(["\r", "\n"], ' ', $v) . "\r\n";
+                // AMI Originate uses comma as variable separator — escape literal commas with \,
+                // Spaces are fine; the dialplan's URIENCODE() handles encoding for get_tts.sh
+                $cleanVal = str_replace(["\r", "\n"], ' ', $v);
+                $cleanVal = str_replace(',', '\,', $cleanVal);
+                $varLines .= "Variable: {$k}={$cleanVal}\r\n";
             }
         }
 

@@ -153,7 +153,7 @@
             <hr style="border: none; border-top: 2px dashed var(--surface-border); margin: 0;">
             
             <div style="text-align: center; flex: 1; display: flex; flex-direction: column;">
-                <iframe id="wa-qr-frame" src="{{ $engineRoot }}/qr" width="100%" style="border: none; border-radius: 16px; background: transparent; flex: 1; min-height: 380px;"></iframe>
+                <iframe id="wa-qr-frame" src="/wa-qr" width="100%" style="border: none; border-radius: 16px; background: transparent; flex: 1; min-height: 380px;"></iframe>
             </div>
         </div>
     </div>

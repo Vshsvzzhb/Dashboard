@@ -416,10 +416,13 @@
 
             <div class="field">
                 <label class="field-label" for="password">Password</label>
-                <div class="field-wrap">
+                <div class="field-wrap" style="position: relative;">
                     <i data-lucide="lock" class="field-icon"></i>
                     <input class="field-input" type="password" id="password" name="password"
-                           required autocomplete="current-password" placeholder="••••••••">
+                           required autocomplete="current-password" placeholder="••••••••" style="padding-right: 44px;">
+                    <button type="button" id="toggle-password" style="position: absolute; right: 14px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--muted); display: flex; align-items: center;">
+                        <i data-lucide="eye" style="width: 16px; height: 16px;" id="eye-icon"></i>
+                    </button>
                 </div>
             </div>
 
@@ -449,6 +452,26 @@
 
     </div>
 
-    <script>lucide.createIcons();</script>
+    <script>
+        lucide.createIcons();
+        
+        const togglePassword = document.querySelector('#toggle-password');
+        const passwordInput = document.querySelector('#password');
+        const eyeIcon = document.querySelector('#eye-icon');
+
+        if (togglePassword && passwordInput) {
+            togglePassword.addEventListener('click', function() {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                
+                if (type === 'password') {
+                    eyeIcon.setAttribute('data-lucide', 'eye');
+                } else {
+                    eyeIcon.setAttribute('data-lucide', 'eye-off');
+                }
+                lucide.createIcons();
+            });
+        }
+    </script>
 </body>
 </html>

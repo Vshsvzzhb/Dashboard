@@ -30,13 +30,9 @@
                     <i data-lucide="plus" style="width: 16px; height: 16px;"></i>
                     ADD CONTACT
                 </button>
-                <button class="btn" style="background: #0066FF; color: white; border: none; border-radius: 4px; padding: 10px 16px; font-weight: 600; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                <button class="btn" style="background: #10B981; color: white; border: none; border-radius: 4px; padding: 10px 16px; font-weight: 600; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; cursor: pointer;" onclick="document.getElementById('importCsvModal').style.display='flex'">
                     <i data-lucide="file-text" style="width: 16px; height: 16px;"></i>
-                    IMPORT/EXPORT
-                </button>
-                <button class="btn" style="background: #FEE2E2; color: #EF4444; border: none; border-radius: 4px; padding: 10px 16px; font-weight: 600; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; cursor: pointer;">
-                    <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
-                    DELETE CONTACT
+                    IMPORT CSV
                 </button>
             </div>
         </div>
@@ -90,10 +86,17 @@
                                 <span style="background: #F3F4F6; color: #4B5563; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700;">Personal</span>
                             @endif
                         </td>
-                        <td style="padding: 16px 8px;">
-                            <button style="background: #0066FF; border: none; color: white; width: 32px; height: 32px; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                        <td style="padding: 16px 8px; display: flex; gap: 8px; align-items: center;">
+                            <button style="background: #0066FF; border: none; color: white; width: 32px; height: 32px; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer;" title="Edit Contact">
                                 <i data-lucide="edit-2" style="width: 14px; height: 14px;"></i>
                             </button>
+                            <form action="/phonebook/{{ $contact->id }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this contact?')" style="margin: 0;">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" style="background: #EF4444; border: none; color: white; width: 32px; height: 32px; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer;" title="Delete Contact">
+                                    <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+                                </button>
+                            </form>
                         </td>
                     </tr>
                     @empty
@@ -140,6 +143,37 @@
             <div style="display: flex; justify-content: flex-end; gap: 16px;">
                 <button type="button" class="btn" style="background: transparent; color: #4B5563; font-weight: 700;" onclick="document.getElementById('addToPhonebookModal').style.display='none'">Cancel</button>
                 <button type="submit" class="btn btn-primary" style="background: #0066FF; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 700;">Save Contact</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Import CSV -->
+<div id="importCsvModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0, 0.4); backdrop-filter: blur(8px); z-index: 100; align-items: center; justify-content: center;">
+    <div class="glass-panel" style="width: 100%; max-width: 500px; padding: 40px; background: #ffffff; border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.1);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px;">
+            <div>
+                <h2 style="font-size: 1.4rem; font-weight: 800; margin: 0; color: #1F2937;">Import Contacts (CSV)</h2>
+                <p style="color: #6B7280; font-size: 0.85rem; margin-top: 4px;">to Phonebook: <strong style="color: #10B981;">{{ $label }}</strong></p>
+            </div>
+            <button style="background: transparent; border: none; color: #9CA3AF; cursor: pointer;" onclick="document.getElementById('importCsvModal').style.display='none'">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        
+        <form action="/phonebook/import" method="POST" enctype="multipart/form-data">
+            @csrf
+            <input type="hidden" name="label" value="{{ $label }}">
+            
+            <div style="margin-bottom: 24px;">
+                <label style="display: block; margin-bottom: 8px; color: #4B5563; font-weight: 700; font-size: 0.85rem;">Select CSV File</label>
+                <input type="file" name="file" required accept=".csv" style="width: 100%; background: #F9FAFB; border: 2px solid #E5E7EB; border-radius: 8px; padding: 12px 16px; color: #1F2937; outline: none; font-size: 0.95rem; font-weight: 500;">
+                <p style="color: #9CA3AF; font-size: 0.75rem; margin-top: 6px;">Format CSV harus memiliki header: <strong>name, phone</strong></p>
+            </div>
+            
+            <div style="display: flex; justify-content: flex-end; gap: 16px;">
+                <button type="button" class="btn" style="background: transparent; color: #4B5563; font-weight: 700;" onclick="document.getElementById('importCsvModal').style.display='none'">Cancel</button>
+                <button type="submit" class="btn" style="background: #10B981; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 700; cursor: pointer;">Upload & Import</button>
             </div>
         </form>
     </div>

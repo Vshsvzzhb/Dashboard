@@ -24,6 +24,43 @@ Route::middleware('auth')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/wa-status', [DashboardController::class, 'waStatus']);
 
+    // WA Engine Proxies
+    Route::get('/wa-qr', function () {
+        $apiUrl = \App\Services\WaEngineService::engineRoot();
+        $sessionId = 'user_' . auth()->id();
+        try {
+            $response = \Illuminate\Support\Facades\Http::timeout(5)->get($apiUrl . '/qr', [
+                'session' => $sessionId
+            ]);
+            $body = $response->body();
+            $body = str_replace('action="/logout', 'action="/wa-logout', $body);
+            $body = str_replace('href="/status', 'href="/wa-status-raw', $body);
+            return response($body);
+        } catch (\Exception $e) {
+            return response("Could not reach WA Engine: " . $e->getMessage(), 500);
+        }
+    });
+
+    Route::post('/wa-logout', function (\Illuminate\Http\Request $request) {
+        $apiUrl = \App\Services\WaEngineService::engineRoot();
+        $session = $request->query('session');
+        try {
+            \Illuminate\Support\Facades\Http::post($apiUrl . '/logout?session=' . urlencode($session));
+        } catch (\Exception $e) {}
+        return redirect('/wa-qr?session=' . urlencode($session));
+    });
+
+    Route::get('/wa-status-raw', function (\Illuminate\Http\Request $request) {
+        $apiUrl = \App\Services\WaEngineService::engineRoot();
+        $session = $request->query('session');
+        try {
+            $response = \Illuminate\Support\Facades\Http::get($apiUrl . '/status?session=' . urlencode($session));
+            return response()->json($response->json());
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    });
+
     // Blast History
     Route::get('/blast-history', [BlastHistoryController::class, 'index']);
     Route::get('/blast-history/{blast}', [BlastHistoryController::class, 'show']);
@@ -33,6 +70,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/phonebook/show/{label}', [ContactController::class, 'show']);
     Route::post('/phonebook/fetch-wa', [ContactController::class, 'fetchWaGroups']);
     Route::post('/phonebook', [ContactController::class, 'store']);
+    Route::post('/phonebook/import', [ContactController::class, 'import']);
     Route::delete('/phonebook/{contact}', [ContactController::class, 'destroy']);
 
     // Campaigns

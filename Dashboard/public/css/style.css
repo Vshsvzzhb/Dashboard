@@ -454,3 +454,86 @@ tbody tr:hover td { background: var(--bg-base); }
 
 /* ── Pulse animation ── */
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+/* ── Responsive Mobile Styles ── */
+#sidebar-toggle {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  #sidebar-toggle {
+    display: flex !important;
+  }
+  
+  body {
+    overflow: auto;
+  }
+  
+  .layout-container {
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+  }
+  
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: -260px;
+    bottom: 0;
+    width: 260px;
+    height: 100vh;
+    box-shadow: var(--shadow-lg);
+    transition: left 0.3s ease;
+    z-index: 100;
+  }
+  
+  .sidebar.open {
+    left: 0;
+  }
+  
+  .main-content {
+    height: auto;
+    overflow: visible;
+  }
+  
+  .top-header {
+    padding: 0 16px;
+  }
+  
+  .page-container {
+    padding: 16px 16px 40px;
+  }
+  
+  /* Auto-stack structural layouts while preserving WebRTC keypad and dynamic columns */
+  .page-container div[style*="display: grid"]:not([style*="repeat(3"]):not([style*="minmax"]) {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+  
+  .bento-grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .bento-card.wide {
+    grid-column: span 1 !important;
+  }
+  
+  .page-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+  
+  .page-header > div {
+    width: 100%;
+  }
+  
+  .page-header .btn,
+  .page-header form {
+    width: 100%;
+  }
+  
+  .page-header .btn {
+    justify-content: center;
+  }
+}

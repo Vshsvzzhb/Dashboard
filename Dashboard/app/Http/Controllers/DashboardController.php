@@ -18,8 +18,8 @@ class DashboardController extends Controller
         $totalSent      = Campaign::sum('sent_count');
         $recentCampaigns = Campaign::latest()->take(5)->get();
         $recentBlasts    = Blast::latest()->take(5)->get();
-        $apiUrl = Setting::where('key', 'wa_api_url')->value('value') ?? 'http://localhost:4000';
-        $waStatus = WaEngineService::getStatus($apiUrl);
+        $apiUrl = Setting::where('key', 'wa_api_url')->value('value') ?? 'http://127.0.0.1:4000';
+        $waStatus = WaEngineService::getStatus($apiUrl, 'user_' . auth()->id());
         $waLabel  = WaEngineService::statusLabel($waStatus);
         $engineRoot = WaEngineService::engineRoot($apiUrl);
 
@@ -39,8 +39,8 @@ class DashboardController extends Controller
 
     public function waStatus()
     {
-        $apiUrl = Setting::where('key', 'wa_api_url')->value('value') ?? 'http://localhost:4000';
-        $waStatus = WaEngineService::getStatus($apiUrl);
+        $apiUrl = Setting::where('key', 'wa_api_url')->value('value') ?? 'http://127.0.0.1:4000';
+        $waStatus = WaEngineService::getStatus($apiUrl, 'user_' . auth()->id());
         $waLabel  = WaEngineService::statusLabel($waStatus);
 
         return response()->json([

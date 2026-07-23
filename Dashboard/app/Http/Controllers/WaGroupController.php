@@ -18,7 +18,7 @@ class WaGroupController extends Controller
     public function fetch(Request $request)
     {
         $baseUrl = \App\Models\Setting::where('key', 'wa_api_url')->value('value');
-        $apiUrl = \App\Services\WaEngineService::groupsUrl($baseUrl);
+        $apiUrl = \App\Services\WaEngineService::groupsUrl($baseUrl, 'user_' . auth()->id());
 
         try {
             $response = Http::timeout(10)->get($apiUrl);
@@ -67,7 +67,7 @@ class WaGroupController extends Controller
         $groupName = $request->group_name;
         
         $baseUrl = \App\Models\Setting::where('key', 'wa_api_url')->value('value');
-        $apiUrl = \App\Services\WaEngineService::groupMembersUrl($groupId, $baseUrl);
+        $apiUrl = \App\Services\WaEngineService::groupMembersUrl($groupId, $baseUrl, 'user_' . auth()->id());
 
         try {
             $response = Http::timeout(15)->get($apiUrl);

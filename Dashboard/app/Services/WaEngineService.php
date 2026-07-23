@@ -9,7 +9,8 @@ class WaEngineService
 {
     public static function engineRoot(?string $apiUrl = null): string
     {
-        $apiUrl = $apiUrl ?? Setting::where('key', 'wa_api_url')->value('value') ?? 'http://localhost:4000';
+        $apiUrl = $apiUrl ?? Setting::where('key', 'wa_api_url')->value('value') ?? 'http://127.0.0.1:4000';
+        $apiUrl = str_replace('localhost', '127.0.0.1', $apiUrl);
 
         $root = rtrim($apiUrl, '/');
         if (str_ends_with($root, '/api')) {
@@ -19,27 +20,34 @@ class WaEngineService
         return $root;
     }
 
-    public static function sendBulkUrl(?string $apiUrl = null): string
+    public static function sendBulkUrl(?string $apiUrl = null, ?string $sessionId = null): string
     {
-        return self::engineRoot($apiUrl) . '/send-bulk';
+        $url = self::engineRoot($apiUrl) . '/send-bulk';
+        return $sessionId ? $url . '?session=' . urlencode($sessionId) : $url;
     }
 
-    public static function groupsUrl(?string $apiUrl = null): string
+    public static function groupsUrl(?string $apiUrl = null, ?string $sessionId = null): string
     {
-        return self::engineRoot($apiUrl) . '/groups';
+        $url = self::engineRoot($apiUrl) . '/groups';
+        return $sessionId ? $url . '?session=' . urlencode($sessionId) : $url;
     }
 
-    public static function groupMembersUrl(string $groupId, ?string $apiUrl = null): string
+    public static function groupMembersUrl(string $groupId, ?string $apiUrl = null, ?string $sessionId = null): string
     {
-        return self::engineRoot($apiUrl) . '/groups/' . urlencode($groupId) . '/members';
+        $url = self::engineRoot($apiUrl) . '/groups/' . urlencode($groupId) . '/members';
+        return $sessionId ? $url . '?session=' . urlencode($sessionId) : $url;
     }
 
-    public static function getStatus(?string $apiUrl = null): array
+    public static function getStatus(?string $apiUrl = null, ?string $sessionId = null): array
     {
         $root = self::engineRoot($apiUrl);
+        $url = $root . '/status';
+        if ($sessionId) {
+            $url .= '?session=' . urlencode($sessionId);
+        }
 
         try {
-            $response = Http::timeout(5)->get($root . '/status');
+            $response = Http::timeout(5)->get($url);
 
             if ($response->successful()) {
                 return array_merge($response->json(), [

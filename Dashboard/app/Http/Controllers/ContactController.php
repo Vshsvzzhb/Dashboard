@@ -37,7 +37,7 @@ class ContactController extends Controller
 
         $label = $request->label;
         $baseUrl = \App\Models\Setting::where('key', 'wa_api_url')->value('value');
-        $apiUrl = \App\Services\WaEngineService::groupsUrl($baseUrl);
+        $apiUrl = \App\Services\WaEngineService::groupsUrl($baseUrl, 'user_' . auth()->id());
 
         try {
             $response = \Illuminate\Support\Facades\Http::timeout(10)->get($apiUrl);
@@ -112,5 +112,61 @@ class ContactController extends Controller
     {
         $contact->delete();
         return redirect()->back()->with('success', 'Contact deleted.');
+    }
+
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:csv,txt,xlsx', // accept csv and text files
+            'label' => 'required|string|max:255'
+        ]);
+
+        $file = $request->file('file');
+        $label = $request->label;
+        $added = 0;
+
+        if (($handle = fopen($file->getRealPath(), 'r')) !== FALSE) {
+            $header = fgetcsv($handle, 1000, ',');
+            
+            if ($header !== FALSE) {
+                $header = array_map('strtolower', $header);
+                $nameIdx = array_search('name', $header);
+                $phoneIdx = array_search('phone', $header);
+
+                if ($nameIdx === false || $phoneIdx === false) {
+                    $nameIdx = 0;
+                    $phoneIdx = 1;
+                }
+
+                while (($data = fgetcsv($handle, 1000, ',')) !== FALSE) {
+                    if (!isset($data[$phoneIdx]) || empty(trim($data[$phoneIdx]))) {
+                        continue;
+                    }
+                    
+                    $phone = trim($data[$phoneIdx]);
+                    $name = isset($data[$nameIdx]) ? trim($data[$nameIdx]) : 'Unnamed';
+
+                    $contact = Contact::where('phone', $phone)->first();
+                    if ($contact) {
+                        $labels = json_decode($contact->labels, true) ?? [];
+                        if (!in_array($label, $labels)) {
+                            $labels[] = $label;
+                            $contact->update(['labels' => json_encode($labels)]);
+                            $added++;
+                        }
+                    } else {
+                        Contact::create([
+                            'name' => $name,
+                            'phone' => $phone,
+                            'labels' => json_encode([$label])
+                        ]);
+                        $added++;
+                    }
+                }
+            }
+            fclose($handle);
+        }
+
+        return redirect()->back()->with('success', "Successfully imported {$added} contacts into Phonebook: {$label}");
     }
 }

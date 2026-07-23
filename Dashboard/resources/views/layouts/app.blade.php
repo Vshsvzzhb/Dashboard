@@ -70,8 +70,10 @@
         <main class="main-content">
             <!-- Header -->
             <header class="top-header">
-                <div class="header-left">
-                    <!-- Space for breadcrumbs or context -->
+                <div class="header-left" style="display: flex; align-items: center; gap: 12px;">
+                    <button id="sidebar-toggle" style="background: transparent; border: none; cursor: pointer; color: var(--text-primary); display: none; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--surface-border);">
+                        <i data-lucide="menu" style="width: 24px; height: 24px;"></i>
+                    </button>
                 </div>
                 
                 <div class="header-right" style="display: flex; gap: 24px; align-items: center;">
@@ -94,6 +96,21 @@
     <script>
         // Initialize Lucide icons
         lucide.createIcons();
+
+        // Sidebar toggle for mobile
+        const toggleBtn = document.getElementById('sidebar-toggle');
+        const sidebar = document.querySelector('.sidebar');
+        if (toggleBtn && sidebar) {
+            toggleBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                sidebar.classList.toggle('open');
+            });
+            document.addEventListener('click', (e) => {
+                if (sidebar.classList.contains('open') && !sidebar.contains(e.target) && e.target !== toggleBtn) {
+                    sidebar.classList.remove('open');
+                }
+            });
+        }
 
         // Server status toggle animation
         const statusBtn = document.getElementById('server-status-btn');

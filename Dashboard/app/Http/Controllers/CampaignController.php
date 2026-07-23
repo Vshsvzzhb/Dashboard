@@ -68,7 +68,7 @@ class CampaignController extends Controller
 
         if ($request->status === 'running') {
             // Trigger WA Engine
-            $apiUrl   = Setting::where('key', 'wa_api_url')->value('value');
+            $apiUrl   = Setting::where('key', 'wa_api_url')->value('value') ?? 'http://127.0.0.1:4000';
             $apiToken = Setting::where('key', 'wa_api_token')->value('value');
             $delay    = (int)(Setting::where('key', 'sender_delay')->value('value') ?? 3000);
 
@@ -84,7 +84,7 @@ class CampaignController extends Controller
                         Http::withHeaders([
                             'Authorization' => 'Bearer ' . $apiToken,
                             'Content-Type'  => 'application/json',
-                        ])->timeout(15)->post(\App\Services\WaEngineService::sendBulkUrl($apiUrl), [
+                        ])->timeout(15)->post(\App\Services\WaEngineService::sendBulkUrl($apiUrl, 'user_' . auth()->id()), [
                             'recipients' => $phones,
                             'message'    => $campaign->message,
                             'delay_ms'   => $delay,

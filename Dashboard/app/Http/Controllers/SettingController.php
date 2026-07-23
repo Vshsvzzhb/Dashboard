@@ -12,7 +12,7 @@ class SettingController extends Controller
     {
         $settings = Setting::pluck('value', 'key');
         $apiUrl   = $settings['wa_api_url'] ?? 'http://localhost:4000';
-        $waStatus = WaEngineService::getStatus($apiUrl);
+        $waStatus = WaEngineService::getStatus($apiUrl, 'user_' . auth()->id());
         $waLabel  = WaEngineService::statusLabel($waStatus);
         $engineRoot = WaEngineService::engineRoot($apiUrl);
 
