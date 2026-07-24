@@ -52,6 +52,10 @@ Route::get('/phonebook', function () {
     return view('phonebook');
 })->name('phonebook');
 
+Route::get('/wa-connect', function () {
+    return view('wa-connect');
+})->name('wa.connect');
+
 Route::get('/campaigns', function () {
     return view('campaigns');
 })->name('campaigns');
@@ -61,6 +65,14 @@ Route::get('/wa-groups', function () {
 })->name('wa.groups');
 
 // SMS Gateway Routes
+Route::get('/phonebook-sms', function () {
+    return view('phonebook-sms');
+})->name('sms.phonebook');
+
+Route::get('/sms-connect', function () {
+    return view('sms-connect');
+})->name('sms.connect');
+
 Route::get('/sms-campaigns', function () {
     return view('sms-campaigns');
 })->name('sms.campaigns');

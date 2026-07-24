@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VetenCall - WhatsApp Phonebook Manager</title>
+    <title>VetenCall - SMS Phonebook Manager</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -34,14 +34,14 @@
             
             <header class="h-20 border-b border-white/10 px-6 md:px-10 flex items-center justify-between bg-white/[0.02] backdrop-blur-xl sticky top-0 z-30">
                 <div>
-                    <h1 class="text-xl font-bold text-white tracking-tight">WhatsApp Phonebook Manager</h1>
-                    <p class="text-xs text-slate-300">Manage your contact groups for WhatsApp campaigns.</p>
+                    <h1 class="text-xl font-bold text-white tracking-tight">SMS Phonebook Manager</h1>
+                    <p class="text-xs text-slate-300">Manage your contact groups for SMS campaigns.</p>
                 </div>
                 
                 <div class="flex items-center gap-4">
                     <div class="hidden lg:flex items-center bg-[#0c1638]/60 border border-white/10 rounded-xl px-3 py-2 w-64 text-xs text-slate-300">
                         <svg class="w-4 h-4 text-slate-400 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                        <input type="text" placeholder="Search WhatsApp phonebook..." class="bg-transparent border-none focus:outline-none w-full text-white placeholder-slate-400 text-xs">
+                        <input type="text" placeholder="Search SMS phonebook..." class="bg-transparent border-none focus:outline-none w-full text-white placeholder-slate-400 text-xs">
                     </div>
 
                     <div class="flex items-center gap-3 pl-3 border-l border-white/10">
@@ -88,7 +88,7 @@
 
                         <div class="pt-4 border-t border-white/10 flex items-center justify-between text-xs">
                             <a href="#" class="text-blue-400 hover:underline font-semibold">Manage Contacts →</a>
-                            <span class="text-[10px] text-slate-400">WhatsApp Group</span>
+                            <span class="text-[10px] text-slate-400">SMS Group</span>
                         </div>
                     </div>
 
@@ -111,7 +111,7 @@
 
                         <div class="pt-4 border-t border-white/10 flex items-center justify-between text-xs">
                             <a href="#" class="text-blue-400 hover:underline font-semibold">Manage Contacts →</a>
-                            <span class="text-[10px] text-slate-400">WhatsApp Group</span>
+                            <span class="text-[10px] text-slate-400">SMS Group</span>
                         </div>
                     </div>
                 </div>
@@ -125,8 +125,8 @@
             <button onclick="toggleAddModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white font-bold text-sm">✕</button>
             
             <div>
-                <h3 class="text-lg font-bold text-white">Add New WhatsApp Phonebook</h3>
-                <p class="text-xs text-slate-300 mt-1">Buat grup kontak baru untuk target campaign WhatsApp.</p>
+                <h3 class="text-lg font-bold text-white">Add New SMS Phonebook</h3>
+                <p class="text-xs text-slate-300 mt-1">Buat grup kontak baru untuk target campaign SMS.</p>
             </div>
 
             <div class="space-y-4">
@@ -142,7 +142,7 @@
 
             <div class="flex items-center justify-end gap-3 pt-2">
                 <button onclick="toggleAddModal()" class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs text-slate-300 font-semibold transition">Cancel</button>
-                <button onclick="toggleAddModal()" class="px-5 py-2 rounded-xl bg-[#2f6bfd] hover:bg-blue-600 text-xs text-white font-semibold shadow-lg transition">Save WhatsApp Group</button>
+                <button onclick="toggleAddModal()" class="px-5 py-2 rounded-xl bg-[#2f6bfd] hover:bg-blue-600 text-xs text-white font-semibold shadow-lg transition">Save SMS Group</button>
             </div>
         </div>
     </div>

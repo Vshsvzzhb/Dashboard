@@ -45,6 +45,11 @@
                        class="block px-4 py-2 rounded-xl font-medium text-xs transition {{ request()->routeIs('wa.groups') ? 'bg-[#2f6bfd]/20 text-white' : 'text-slate-300 hover:text-white hover:bg-white/5' }}">
                         WA Groups
                     </a>
+
+                    <a href="{{ route('wa.connect') }}" 
+                       class="block px-4 py-2 rounded-xl font-medium text-xs transition {{ request()->routeIs('wa.connect') ? 'bg-[#2f6bfd]/20 text-white' : 'text-slate-300 hover:text-white hover:bg-white/5' }}">
+                        Connect Device
+                    </a>
                 </div>
             </div>
 
@@ -54,8 +59,8 @@
                 <div class="space-y-1">
                     <p class="px-4 text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-1">SMS</p>
 
-                    <a href="{{ route('phonebook') }}" 
-                       class="block px-4 py-2 rounded-xl font-medium text-xs text-slate-300 hover:text-white hover:bg-white/5 transition">
+                    <a href="{{ route('sms.phonebook') }}" 
+                       class="block px-4 py-2 rounded-xl font-medium text-xs transition {{ request()->routeIs('sms.phonebook') ? 'bg-[#2f6bfd]/20 text-white' : 'text-slate-300 hover:text-white hover:bg-white/5' }}">
                         Phonebook
                     </a>
 
@@ -67,6 +72,11 @@
                     <a href="#" 
                        class="block px-4 py-2 rounded-xl font-medium text-xs text-slate-300 hover:text-white hover:bg-white/5 transition">
                         Auto Responder
+                    </a>
+
+                    <a href="{{ route('sms.connect') }}" 
+                       class="block px-4 py-2 rounded-xl font-medium text-xs transition {{ request()->routeIs('sms.connect') ? 'bg-[#2f6bfd]/20 text-white' : 'text-slate-300 hover:text-white hover:bg-white/5' }}">
+                        Connect Device
                     </a>
                 </div>
             </div>
