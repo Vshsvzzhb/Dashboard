@@ -27,71 +27,7 @@
         <div class="absolute -bottom-24 -right-24 w-[600px] h-[600px] bg-blue-600/30 rounded-full blur-[160px] pointer-events-none"></div>
 
         {{-- 1. SIDEBAR NAVIGATION --}}
-        <aside class="w-72 bg-white/[0.04] backdrop-blur-3xl border-r border-white/10 flex flex-col justify-between p-6 z-20 shrink-0 hidden md:flex shadow-2xl">
-            <div class="space-y-6">
-                {{-- Logo & Brand --}}
-                <div class="flex items-center gap-3 px-2">
-                    <img src="{{ asset('images/VetenAplikasi.png') }}" alt="VetenCall Logo" class="h-9 w-auto object-contain">
-                    <span class="text-xl font-bold tracking-tight text-white">VetenCall</span>
-                </div>
-
-                {{-- Nav Links --}}
-                <nav class="space-y-4">
-                    <div class="space-y-1">
-                        <a href="{{ route('dashboard') }}" class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-white/5 font-medium text-xs transition">
-                            <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
-                            Dashboard
-                        </a>
-                        <a href="{{ route('phonebook') }}" class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-white/5 font-medium text-xs transition">
-                            <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                            Global Phonebook
-                        </a>
-                    </div>
-
-                    <div class="space-y-1">
-                        <p class="px-4 text-[10px] font-bold uppercase tracking-wider text-emerald-400/80 mb-1 flex items-center gap-1.5">
-                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> WhatsApp Gateway
-                        </p>
-                        <a href="#" class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-white/5 font-medium text-xs transition">
-                            <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
-                            WA Campaigns
-                        </a>
-                        <a href="#" class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-white/5 font-medium text-xs transition">
-                            <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                            WA Groups
-                        </a>
-                    </div>
-
-                    <div class="space-y-1">
-                        <p class="px-4 text-[10px] font-bold uppercase tracking-wider text-cyan-400/80 mb-1 flex items-center gap-1.5">
-                            <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span> SMS Gateway
-                        </p>
-                        <a href="#" class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-white/5 font-medium text-xs transition">
-                            <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                            SMS Campaigns
-                        </a>
-                    </div>
-
-                    <div class="space-y-1">
-                        <p class="px-4 text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">System & Reports</p>
-                        <a href="{{ route('gateways.settings') }}" class="flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#2f6bfd]/20 border border-blue-500/30 text-white font-semibold text-xs shadow-lg shadow-blue-600/10">
-                            <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                            Gateway Settings
-                        </a>
-                    </div>
-                </nav>
-            </div>
-
-            <div class="space-y-1.5 pt-4 border-t border-white/10">
-                <form action="#" method="POST">
-                    @csrf
-                    <button type="submit" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-red-400 hover:text-red-300 hover:bg-red-500/10 font-medium text-xs transition">
-                        <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
-                        Log Out
-                    </button>
-                </form>
-            </div>
-        </aside>
+        @include('layouts.sidebar')
 
         {{-- 2. MAIN CONTENT AREA --}}
         <main class="flex-1 flex flex-col min-w-0 z-10 overflow-y-auto">

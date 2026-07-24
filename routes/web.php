@@ -77,10 +77,18 @@ Route::get('/sms-campaigns', function () {
     return view('sms-campaigns');
 })->name('sms.campaigns');
 
+Route::get('/sms-autoresponder', function () {
+    return view('sms-autoresponder');
+})->name('sms.autoresponder');
+
 // WebRTC Routes
 Route::get('/webrtc', function () {
     return view('webrtc');
 })->name('webrtc.phone');
+
+Route::get('/webrtc-history', function () {
+    return view('webrtc-history');
+})->name('webrtc.history');
 
 // Settings Route
 Route::get('/settings/gateways', function () {

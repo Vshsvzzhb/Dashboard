@@ -69,8 +69,8 @@
                         Campaigns
                     </a>
 
-                    <a href="#" 
-                       class="block px-4 py-2 rounded-xl font-medium text-xs text-slate-300 hover:text-white hover:bg-white/5 transition">
+                    <a href="{{ route('sms.autoresponder') }}" 
+                       class="block px-4 py-2 rounded-xl font-medium text-xs transition {{ request()->routeIs('sms.autoresponder') ? 'bg-[#2f6bfd]/20 text-white' : 'text-slate-300 hover:text-white hover:bg-white/5' }}">
                         Auto Responder
                     </a>
 
@@ -92,8 +92,8 @@
                         Text to Speech
                     </a>
 
-                    <a href="#" 
-                       class="block px-4 py-2 rounded-xl font-medium text-xs text-slate-300 hover:text-white hover:bg-white/5 transition">
+                    <a href="{{ route('webrtc.history') }}" 
+                       class="block px-4 py-2 rounded-xl font-medium text-xs transition {{ request()->routeIs('webrtc.history') ? 'bg-[#2f6bfd]/20 text-white' : 'text-slate-300 hover:text-white hover:bg-white/5' }}">
                         History Call
                     </a>
                 </div>
