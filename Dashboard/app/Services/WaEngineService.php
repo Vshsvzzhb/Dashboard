@@ -10,7 +10,9 @@ class WaEngineService
     public static function engineRoot(?string $apiUrl = null): string
     {
         $apiUrl = $apiUrl ?? Setting::where('key', 'wa_api_url')->value('value') ?? 'http://127.0.0.1:4000';
-        $apiUrl = str_replace('localhost', '127.0.0.1', $apiUrl);
+        // Respect the configured host exactly (do not force localhost -> 127.0.0.1).
+        // This allows using a LAN IP (e.g. http://192.168.1.10:4000) so mobile
+        // devices on the same network can reach the wa-engine service.
 
         $root = rtrim($apiUrl, '/');
         if (str_ends_with($root, '/api')) {

@@ -10,9 +10,19 @@ class WaGroupController extends Controller
 {
     public function index()
     {
-        // Get contacts that have the label "WA-Group" or phone ending with @g.us
-        $groups = Contact::where('phone', 'LIKE', '%@g.us%')->get();
-        return view('wa_groups', compact('groups'));
+        $baseUrl = \App\Models\Setting::where('key', 'wa_api_url')->value('value');
+        $sessionId = 'user_' . auth()->id();
+        $status = \App\Services\WaEngineService::getStatus($baseUrl, $sessionId);
+        $label  = \App\Services\WaEngineService::statusLabel($status);
+
+        // Only show persisted groups if the engine is reachable and connected.
+        if (!empty($status['reachable']) && !empty($status['connected'])) {
+            $groups = Contact::where('phone', 'LIKE', '%@g.us%')->get();
+        } else {
+            $groups = collect();
+        }
+
+        return view('wa_groups', compact('groups', 'status', 'label'));
     }
 
     public function fetch(Request $request)

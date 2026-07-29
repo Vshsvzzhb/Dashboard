@@ -112,7 +112,7 @@
 
     {{-- LOG OUT --}}
     <div class="space-y-1.5 pt-4 border-t border-white/10">
-        <form action="#" method="POST">
+        <form action="{{ route('logout') }}" method="POST">
             @csrf
             <button type="submit" class="w-full text-left px-4 py-2.5 rounded-xl text-red-400 hover:text-red-300 hover:bg-red-500/10 font-medium text-xs transition">
                 Log Out

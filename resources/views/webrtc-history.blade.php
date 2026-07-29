@@ -50,15 +50,27 @@
             </header>
 
             <div class="p-6 md:p-10 space-y-8 max-w-7xl w-full mx-auto pb-20">
+                
+                {{-- Flash Message --}}
+                @if(session('success'))
+                    <div class="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 p-4 rounded-xl text-sm mb-4">
+                        {{ session('success') }}
+                    </div>
+                @endif
+
                 <div class="flex items-center justify-between">
                     <div>
                         <h2 class="text-lg font-bold text-white">Recent Calls</h2>
-                        <p class="text-xs text-slate-300">Total 4 recent call records available.</p>
+                        <p class="text-xs text-slate-300">Total {{ $calls->total() ?? 0 }} recent call records available.</p>
                     </div>
 
-                    <button class="flex items-center justify-center gap-2 px-5 py-2.5 bg-white/5 hover:bg-white/10 rounded-xl font-semibold text-xs text-white border border-white/10 transition">
-                        Clear History
-                    </button>
+                    <form action="{{ route('webrtc.history.clear') }}" method="POST" onsubmit="return confirm('Are you sure you want to clear all history?');">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="flex items-center justify-center gap-2 px-5 py-2.5 bg-red-500/10 hover:bg-red-500/20 rounded-xl font-semibold text-xs text-red-400 border border-red-500/30 transition">
+                            Clear History
+                        </button>
+                    </form>
                 </div>
 
                 <div class="bg-white/[0.05] backdrop-blur-2xl border border-white/10 rounded-3xl overflow-hidden shadow-2xl">
@@ -66,56 +78,52 @@
                         <table class="w-full text-left text-xs border-collapse">
                             <thead>
                                 <tr class="border-b border-white/10 bg-white/[0.02] text-slate-300 uppercase tracking-wider font-semibold">
-                                    <th class="p-5">Caller (Ext)</th>
+                                    <th class="p-5">Caller</th>
                                     <th class="p-5">Recipient</th>
                                     <th class="p-5">Duration</th>
                                     <th class="p-5">Time</th>
                                     <th class="p-5">Status</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-white/5">
-                                <tr>
-                                    <td class="p-5 font-bold text-white">Ext 1001 (SU)</td>
-                                    <td class="p-5 text-slate-300">+6281234567890</td>
-                                    <td class="p-5 text-slate-300">03:45</td>
-                                    <td class="p-5 text-slate-400">Today, 08:30 AM</td>
-                                    <td class="p-5">
-                                        <span class="px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-semibold text-[10px]">Answered</span>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="p-5 font-bold text-white">Ext 1002 (Agent)</td>
-                                    <td class="p-5 text-slate-300">+6287765432101</td>
-                                    <td class="p-5 text-slate-300">01:12</td>
-                                    <td class="p-5 text-slate-400">Today, 07:15 AM</td>
-                                    <td class="p-5">
-                                        <span class="px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-semibold text-[10px]">Answered</span>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="p-5 font-bold text-white">Ext 1001 (SU)</td>
-                                    <td class="p-5 text-slate-300">+6289988776655</td>
-                                    <td class="p-5 text-slate-300">00:00</td>
-                                    <td class="p-5 text-slate-400">Yesterday, 04:45 PM</td>
-                                    <td class="p-5">
-                                        <span class="px-2.5 py-1 rounded-full bg-red-500/10 border border-red-500/30 text-red-400 font-semibold text-[10px]">No Answer</span>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="p-5 font-bold text-white">Ext 1003 (Support)</td>
-                                    <td class="p-5 text-slate-300">+6281122334455</td>
-                                    <td class="p-5 text-slate-300">00:00</td>
-                                    <td class="p-5 text-slate-400">Yesterday, 10:20 AM</td>
-                                    <td class="p-5">
-                                        <span class="px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 font-semibold text-[10px]">Busy</span>
-                                    </td>
-                                </tr>
+                            <tbody id="webrtc-table-body" class="divide-y divide-white/5">
+                                @include('partials.webrtc-table-rows')
                             </tbody>
                         </table>
                     </div>
                 </div>
+
+                {{-- Pagination --}}
+                <div class="mt-4">
+                    {{ $calls->links('pagination::tailwind') }}
+                </div>
             </div>
         </main>
     </div>
+
+    <script>
+        function toggleTranscript(id) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.classList.toggle('hidden');
+            }
+        }
+
+        // Realtime Polling (Auto-refresh every 5 seconds)
+        document.addEventListener('DOMContentLoaded', function () {
+            setInterval(function () {
+                fetch('{{ route('webrtc.history') }}', {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.text())
+                .then(html => {
+                    // Update table body without full page reload
+                    document.getElementById('webrtc-table-body').innerHTML = html;
+                })
+                .catch(err => console.error('Error fetching realtime updates:', err));
+            }, 5000);
+        });
+    </script>
 </body>
 </html>

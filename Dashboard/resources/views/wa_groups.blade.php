@@ -22,14 +22,23 @@
             <h1 class="page-title" style="font-weight: 400; color: #1F2937; font-size: 1.5rem;">WA Groups</h1>
             <p style="color: #6B7280; margin-top: 8px;">Manage your synced WhatsApp Groups.</p>
         </div>
-        <div style="display: flex; gap: 12px;">
+        <div style="display: flex; gap: 12px; align-items: center;">
+            @php
+                $engineReachable = $status['reachable'] ?? false;
+                $engineConnected = $status['connected'] ?? false;
+            @endphp
+
             <form action="/wa-groups/fetch" method="POST" style="margin: 0;">
                 @csrf
-                <button type="submit" class="btn" style="background: #10B981; color: white; border: none; border-radius: 6px; padding: 10px 20px; font-weight: 600; font-size: 0.85rem; letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <button type="submit" class="btn" style="background: #10B981; color: white; border: none; border-radius: 6px; padding: 10px 20px; font-weight: 600; font-size: 0.85rem; letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px; cursor: pointer;" {{ $engineReachable && $engineConnected ? '' : 'disabled' }}>
                     <i data-lucide="refresh-cw" style="width: 16px; height: 16px;"></i>
                     SYNC WA GROUPS
                 </button>
             </form>
+
+            <div style="margin-left: 12px; font-weight:700; color: {{ $label['color'] ?? '#666' }}; background: {{ $label['bg'] ?? 'transparent' }}; padding: 8px 12px; border-radius: 8px;">
+                {{ $label['label'] ?? 'Unknown' }}
+            </div>
         </div>
     </div>
 
@@ -62,8 +71,16 @@
         @empty
         <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; background: #ffffff; border-radius: 12px; border: 1px dashed #D1D5DB;">
             <i data-lucide="folder-open" style="width: 48px; height: 48px; color: #9CA3AF; margin-bottom: 16px; display: inline-block;"></i>
-            <h3 style="color: #374151; font-size: 1.2rem; font-weight: 700;">No WA Groups Synced</h3>
-            <p style="color: #6B7280; margin-top: 8px;">Click "SYNC WA GROUPS" to fetch all groups from your connected WhatsApp device.</p>
+            @if(!empty($engineReachable) && !$engineConnected)
+                <h3 style="color: #374151; font-size: 1.2rem; font-weight: 700;">Device Not Connected</h3>
+                <p style="color: #6B7280; margin-top: 8px;">Your WhatsApp device is not connected. Open the QR panel and connect your device first.</p>
+            @elseif(empty($engineReachable))
+                <h3 style="color: #374151; font-size: 1.2rem; font-weight: 700;">Engine Offline</h3>
+                <p style="color: #6B7280; margin-top: 8px;">WA Engine is not reachable. Start the `wa-engine` service on port 4000.</p>
+            @else
+                <h3 style="color: #374151; font-size: 1.2rem; font-weight: 700;">No WA Groups Synced</h3>
+                <p style="color: #6B7280; margin-top: 8px;">Click "SYNC WA GROUPS" to fetch all groups from your connected WhatsApp device.</p>
+            @endif
         </div>
         @endforelse
     </div>

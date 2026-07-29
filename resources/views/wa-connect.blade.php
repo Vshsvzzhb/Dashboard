@@ -55,7 +55,7 @@
                     <p class="text-xs text-slate-300">Please scan the QR code using your phone's WhatsApp -> Linked Devices menu.</p>
                     
                     <div class="w-full rounded-2xl overflow-hidden border border-white/10 bg-white">
-                        <iframe src="http://127.0.0.1:4000/qr" class="w-full h-[650px] border-none"></iframe>
+                        <iframe src="{{ rtrim($apiUrl, '/') }}/qr" class="w-full h-[650px] border-none"></iframe>
                     </div>
                 </div>
             </div>

@@ -230,9 +230,17 @@
 
                         <form action="{{ route('login') }}" method="POST" class="space-y-3.5">
                             @csrf
+
+                            {{-- Error message --}}
+                            @if ($errors->any())
+                                <div class="px-3.5 py-2.5 rounded-xl bg-red-500/20 border border-red-500/40 text-red-300 text-xs">
+                                    {{ $errors->first() }}
+                                </div>
+                            @endif
+
                             <div>
                                 <label class="block text-xs font-medium text-slate-300 mb-1">Email</label>
-                                <input type="email" name="email" required placeholder="Enter your email" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0c1638]/60 border border-white/10 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-blue-400 transition">
+                                <input type="email" name="email" value="{{ old('email') }}" required placeholder="Enter your email" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0c1638]/60 border {{ $errors->has('email') ? 'border-red-500/60' : 'border-white/10' }} text-white placeholder-slate-500 text-xs focus:outline-none focus:border-blue-400 transition">
                             </div>
 
                             <div>

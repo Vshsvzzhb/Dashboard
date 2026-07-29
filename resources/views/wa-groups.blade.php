@@ -39,7 +39,7 @@
                 <div class="flex items-center gap-4">
                     <div class="hidden lg:flex items-center bg-[#0c1638]/60 border border-white/10 rounded-xl px-3 py-2 w-64 text-xs text-slate-300">
                         <svg class="w-4 h-4 text-slate-400 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                        <input type="text" placeholder="Search groups..." class="bg-transparent border-none focus:outline-none w-full text-white placeholder-slate-400 text-xs">
+                        <input type="text" id="searchInput" placeholder="Search groups..." class="bg-transparent border-none focus:outline-none w-full text-white placeholder-slate-400 text-xs">
                     </div>
 
                     <div class="flex items-center gap-3 pl-3 border-l border-white/10">
@@ -56,33 +56,44 @@
 
             <div class="p-6 md:p-10 space-y-8 max-w-7xl w-full mx-auto pb-20">
                 
+                {{-- Alerts --}}
+                @if(session('success'))
+                <div class="px-5 py-3 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs">✅ {{ session('success') }}</div>
+                @endif
+                @if(session('error'))
+                <div class="px-5 py-3 rounded-2xl bg-red-500/15 border border-red-500/30 text-red-300 text-xs">❌ {{ session('error') }}</div>
+                @endif
+
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
                         <h2 class="text-lg font-bold text-white">Synced Groups List</h2>
                         <p class="text-xs text-slate-300">Extract contacts directly from your connected WhatsApp groups.</p>
                     </div>
 
-                    <div class="flex items-center gap-2.5">
-                        <label class="flex items-center gap-2 px-4 py-2.5 bg-[#2f6bfd] hover:bg-blue-600 rounded-xl font-semibold text-xs text-white cursor-pointer transition shadow-lg shadow-blue-600/30">
-                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
-                            Import PDF
-                            <input type="file" accept=".pdf" class="hidden" onchange="alert('PDF groups imported successfully!')">
-                        </label>
-
-                        <button onclick="alert('Exporting WA groups to PDF...')" class="flex items-center gap-2 px-4 py-2.5 bg-[#2f6bfd] hover:bg-blue-600 rounded-xl font-semibold text-xs text-white transition shadow-lg shadow-blue-600/30">
-                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-                            Export PDF
-                        </button>
-
-                        <button onclick="alert('Syncing WhatsApp groups...')" class="flex items-center gap-2 px-5 py-2.5 bg-[#2f6bfd] hover:bg-blue-600 rounded-xl font-semibold text-xs text-white shadow-lg shadow-blue-600/30 transition">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.66-5.66"/></svg>
-                            Sync WA Groups
-                        </button>
+                    <div class="flex flex-col sm:flex-row items-center gap-2.5">
+                        {{-- Select Device Form --}}
+                        <form method="GET" action="{{ route('wa.groups') }}" class="flex items-center gap-2" id="sessionForm">
+                            <select name="session" onchange="document.getElementById('sessionForm').submit()" class="bg-[#070d1f] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500">
+                                @forelse($waDevices as $d)
+                                    <option value="{{ $d['id'] }}" {{ $session === $d['id'] ? 'selected' : '' }}>
+                                        📱 {{ $d['phone'] ? '+'.$d['phone'] : $d['id'] }}
+                                    </option>
+                                @empty
+                                    <option value="">— No Device Connected —</option>
+                                @endforelse
+                            </select>
+                            
+                            <button type="submit" class="flex items-center gap-2 px-5 py-2.5 bg-[#2f6bfd] hover:bg-blue-600 rounded-xl font-semibold text-xs text-white shadow-lg shadow-blue-600/30 transition">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.66-5.66"/></svg>
+                                Sync Groups
+                            </button>
+                        </form>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div class="bg-white/[0.05] backdrop-blur-2xl border border-white/10 rounded-3xl p-6 shadow-2xl flex flex-col justify-between space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" id="groupsContainer">
+                    @forelse($groups as $group)
+                    <div class="group-card bg-white/[0.05] backdrop-blur-2xl border border-white/10 rounded-3xl p-6 shadow-2xl flex flex-col justify-between space-y-4 hover:bg-white/[0.08] transition" data-name="{{ strtolower($group['name'] ?? 'unknown group') }}">
                         <div class="flex items-start justify-between">
                             <div class="w-10 h-10 rounded-2xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-emerald-400">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -90,33 +101,49 @@
                             <span class="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold">Synced</span>
                         </div>
                         <div class="space-y-1">
-                            <h3 class="text-base font-bold text-white">Badminton Smkzie</h3>
-                            <p class="text-xs text-slate-400 font-mono">ID: 120363481017878795@g.us</p>
+                            <h3 class="text-base font-bold text-white leading-tight" title="{{ $group['name'] ?? 'Unknown Group' }}">
+                                {{ Str::limit($group['name'] ?? 'Unknown Group', 40) }}
+                            </h3>
+                            <p class="text-xs text-slate-400 font-mono pt-1">Members: {{ $group['participants_count'] ?? 0 }}</p>
+                            <p class="text-[10px] text-slate-500 font-mono truncate">ID: {{ $group['id'] ?? '-' }}</p>
                         </div>
-                        <button class="w-full py-2.5 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 border border-blue-400/30 text-blue-300 font-semibold text-xs transition">
-                            Extract Contacts
-                        </button>
+                        
+                        <form action="{{ route('wa.groups.extract', ['groupId' => $group['id']]) }}" method="POST">
+                            @csrf
+                            <input type="hidden" name="session" value="{{ $session }}">
+                            <input type="hidden" name="group_name" value="{{ $group['name'] ?? 'Unknown Group' }}">
+                            <button type="submit" class="w-full py-2.5 rounded-xl bg-blue-600/20 hover:bg-blue-600/40 border border-blue-400/30 text-blue-300 font-semibold text-xs transition" onclick="return confirm('Ekstrak kontak dari grup ini menjadi Phonebook baru?')">
+                                Extract Contacts
+                            </button>
+                        </form>
                     </div>
-
-                    <div class="bg-white/[0.05] backdrop-blur-2xl border border-white/10 rounded-3xl p-6 shadow-2xl flex flex-col justify-between space-y-4">
-                        <div class="flex items-start justify-between">
-                            <div class="w-10 h-10 rounded-2xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-emerald-400">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                            </div>
-                            <span class="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold">Synced</span>
-                        </div>
-                        <div class="space-y-1">
-                            <h3 class="text-base font-bold text-white">Panitia reuni Akbar SMP alianah 2025</h3>
-                            <p class="text-xs text-slate-400 font-mono">ID: 120363315784024533@g.us</p>
-                        </div>
-                        <button class="w-full py-2.5 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 border border-blue-400/30 text-blue-300 font-semibold text-xs transition">
-                            Extract Contacts
-                        </button>
+                    @empty
+                    <div class="col-span-1 sm:col-span-2 lg:col-span-3 py-16 text-center text-slate-500">
+                        <svg class="w-12 h-12 mx-auto mb-3 text-slate-600/50" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        <p class="text-sm font-medium">Tidak ada grup WhatsApp yang ditemukan</p>
+                        <p class="text-xs mt-1">Pastikan WA Engine sudah berjalan, perangkat terhubung, dan klik <strong>Sync Groups</strong></p>
                     </div>
+                    @endforelse
                 </div>
 
             </div>
         </main>
     </div>
+
+    <script>
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const cards = document.querySelectorAll('.group-card');
+            
+            cards.forEach(card => {
+                const groupName = card.getAttribute('data-name');
+                if (groupName.includes(searchTerm)) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    </script>
 </body>
 </html>
