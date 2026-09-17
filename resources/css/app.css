@@ -1,1 +1,685 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* =============================================================
+   VETEN NEUMORPHISM DESIGN SYSTEM
+   Dark base: #12182e — shadows: #0b1023 (dark) / #1c2540 (light)
+   Light base: #e8edf5 — shadows: #c8d0e0 (dark) / #ffffff (light)
+   ============================================================= */
+
+:root {
+    /* Dark palette */
+    --nm-bg-dark:        #12182e;
+    --nm-shadow-dark-d:  #080c1a;
+    --nm-shadow-dark-l:  #1b2342;
+
+    /* Light palette */
+    --nm-bg-light:       #e8edf5;
+    --nm-shadow-light-d: #d2dbe8;
+    --nm-shadow-light-l: #ffffff;
+
+    /* Brand */
+    --brand:             #2f6bfd;
+    --brand-glow:        rgba(47, 107, 253, 0.25);
+
+    /* Neumorphic distances */
+    --nm-dist:    10px;
+    --nm-blur:    22px;
+    --nm-dist-sm: 5px;
+    --nm-blur-sm: 12px;
+    --nm-dist-lg: 16px;
+    --nm-blur-lg: 36px;
+}
+
+/* ───────────────────────────── BASE ─────────────────────────── */
+
+*, ::before, ::after {
+    box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+html {
+    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Prevent FOUC */
+html.dark  { background-color: var(--nm-bg-dark); }
+html:not(.dark) { background-color: var(--nm-bg-light); }
+
+body {
+    font-family: 'Outfit', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+html.dark  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 10px; }
+html:not(.dark) ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.10); border-radius: 10px; }
+
+/* ───────────────────────── DARK MODE BASE ────────────────────── */
+
+html.dark body,
+html.dark .min-h-screen {
+    background: var(--nm-bg-dark) !important;
+}
+
+/* ── Neumorphic "raised" card — dark ── */
+html.dark .nm-card {
+    background: var(--nm-bg-dark) !important;
+    border: 1px solid rgba(255,255,255,0.045) !important;
+    box-shadow:
+        var(--nm-dist) var(--nm-dist) var(--nm-blur) var(--nm-shadow-dark-d),
+        calc(-1 * var(--nm-dist)) calc(-1 * var(--nm-dist)) var(--nm-blur) var(--nm-shadow-dark-l) !important;
+    border-radius: 24px !important;
+}
+
+html.dark .nm-card-sm {
+    background: var(--nm-bg-dark) !important;
+    border: 1px solid rgba(255,255,255,0.045) !important;
+    box-shadow:
+        var(--nm-dist-sm) var(--nm-dist-sm) var(--nm-blur-sm) var(--nm-shadow-dark-d),
+        calc(-1 * var(--nm-dist-sm)) calc(-1 * var(--nm-dist-sm)) var(--nm-blur-sm) var(--nm-shadow-dark-l) !important;
+    border-radius: 16px !important;
+}
+
+html.dark .nm-inset {
+    background: var(--nm-bg-dark) !important;
+    border: 1px solid rgba(255,255,255,0.03) !important;
+    box-shadow:
+        inset var(--nm-dist-sm) var(--nm-dist-sm) var(--nm-blur-sm) var(--nm-shadow-dark-d),
+        inset calc(-1 * var(--nm-dist-sm)) calc(-1 * var(--nm-dist-sm)) var(--nm-blur-sm) var(--nm-shadow-dark-l) !important;
+    border-radius: 16px !important;
+}
+
+/* ── Neumorphic button — dark ── */
+html.dark .nm-btn {
+    background: var(--nm-bg-dark) !important;
+    border: 1px solid rgba(255,255,255,0.05) !important;
+    box-shadow:
+        5px 5px 12px var(--nm-shadow-dark-d),
+        -5px -5px 12px var(--nm-shadow-dark-l) !important;
+    border-radius: 16px !important;
+}
+
+html.dark .nm-btn:hover {
+    transform: translateY(-1.5px);
+    border-color: rgba(255,255,255,0.08) !important;
+    box-shadow:
+        var(--nm-dist-sm) var(--nm-dist-sm) var(--nm-blur-sm) var(--nm-shadow-dark-d),
+        calc(-1 * var(--nm-dist-sm)) calc(-1 * var(--nm-dist-sm)) var(--nm-blur-sm) var(--nm-shadow-dark-l) !important;
+}
+
+html.dark .nm-btn:active {
+    transform: translateY(0);
+    box-shadow:
+        inset 3px 3px 8px var(--nm-shadow-dark-d),
+        inset -3px -3px 8px var(--nm-shadow-dark-l) !important;
+}
+
+/* ── Brand button — stays solid blue regardless ── */
+.nm-btn-brand {
+    background: var(--brand) !important;
+    box-shadow:
+        6px 6px 14px rgba(0,0,0,0.30),
+        -3px -3px 10px rgba(47,107,253,0.18),
+        inset 0 1px 0 rgba(255,255,255,0.15) !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 16px !important;
+}
+
+.nm-btn-brand:hover {
+    background: #3d77ff !important;
+    box-shadow:
+        8px 8px 18px rgba(0,0,0,0.35),
+        -3px -3px 12px rgba(47,107,253,0.25),
+        inset 0 1px 0 rgba(255,255,255,0.20) !important;
+    transform: translateY(-1.5px);
+}
+
+.nm-btn-brand:active {
+    transform: translateY(0);
+    box-shadow:
+        inset 4px 4px 10px rgba(0,0,0,0.35),
+        inset -2px -2px 6px rgba(47,107,253,0.15) !important;
+}
+
+/* ── Sidebar — dark ── */
+html.dark aside {
+    background: var(--nm-bg-dark) !important;
+    border-right: 1px solid rgba(255,255,255,0.04) !important;
+    box-shadow: 6px 0 20px rgba(0,0,0,0.35) !important;
+}
+
+html.dark aside a.active,
+html.dark aside a[class*="bg-[#2f6bfd]"] {
+    background: var(--brand) !important;
+    box-shadow:
+        inset 3px 3px 8px rgba(0,0,0,0.30),
+        inset -2px -2px 6px rgba(255,255,255,0.08),
+        0 0 12px var(--brand-glow) !important;
+    color: #fff !important;
+}
+
+/* Active sidebar link via Tailwind classes */
+html.dark aside a.bg-\[\#2f6bfd\] {
+    box-shadow: inset 3px 3px 8px rgba(0,0,0,0.30), 0 0 14px var(--brand-glow) !important;
+}
+
+/* Sidebar hover */
+html.dark aside a:hover,
+html.dark aside button:hover {
+    background: rgba(255,255,255,0.03) !important;
+    box-shadow: 2px 2px 6px rgba(0,0,0,0.25), -1px -1px 4px rgba(255,255,255,0.04) !important;
+}
+
+/* ── Header — dark ── */
+html.dark header:not(.landing-header) {
+    background: var(--nm-bg-dark) !important;
+    border-bottom: 1px solid rgba(255,255,255,0.04) !important;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.30) !important;
+}
+
+/* ── Input fields — dark ── */
+html.dark input,
+html.dark textarea,
+html.dark select {
+    background: var(--nm-bg-dark) !important;
+    border: 1px solid rgba(255,255,255,0.045) !important;
+    color: #e2e8f0 !important;
+    box-shadow:
+        var(--nm-dist-sm) var(--nm-dist-sm) var(--nm-blur-sm) var(--nm-shadow-dark-d),
+        calc(-1 * var(--nm-dist-sm)) calc(-1 * var(--nm-dist-sm)) var(--nm-blur-sm) var(--nm-shadow-dark-l) !important;
+}
+
+html.dark input:focus,
+html.dark textarea:focus,
+html.dark select:focus {
+    outline: none !important;
+    border-color: rgba(47,107,253,0.5) !important;
+    box-shadow:
+        var(--nm-dist-sm) var(--nm-dist-sm) var(--nm-blur-sm) var(--nm-shadow-dark-d),
+        calc(-1 * var(--nm-dist-sm)) calc(-1 * var(--nm-dist-sm)) var(--nm-blur-sm) var(--nm-shadow-dark-l),
+        0 0 0 2px rgba(47,107,253,0.18) !important;
+}
+
+/* ── Table rows — dark ── */
+html.dark tr:hover td {
+    background: rgba(255,255,255,0.025) !important;
+}
+
+/* ── Override generic Tailwind bg-white/[x] cards in dark mode ── */
+html.dark .bg-white\/\[0\.04\],
+html.dark .bg-white\/\[0\.05\],
+html.dark .bg-white\/\[0\.06\],
+html.dark .bg-white\/\[0\.02\],
+html.dark .bg-white\/\[0\.03\] {
+    background: var(--nm-bg-dark) !important;
+    border-color: rgba(255,255,255,0.04) !important;
+    box-shadow:
+        8px 8px 18px var(--nm-shadow-dark-d),
+        -6px -6px 14px var(--nm-shadow-dark-l) !important;
+    backdrop-filter: none !important;
+}
+
+html.dark .backdrop-blur-2xl,
+html.dark .backdrop-blur-3xl {
+    backdrop-filter: none !important;
+}
+
+/* ───────────────────────── LIGHT MODE BASE ───────────────────── */
+
+html:not(.dark) body,
+html:not(.dark) .min-h-screen {
+    background: var(--nm-bg-light) !important;
+    color: #1e3a8a;
+}
+
+/* Broad text reset */
+html:not(.dark) body * { color: #1e3a8a; }
+
+/* ── Neumorphic card — light ── */
+html:not(.dark) .nm-card {
+    background: var(--nm-bg-light) !important;
+    border: 1px solid rgba(0,0,0,0.03) !important;
+    box-shadow:
+        var(--nm-dist) var(--nm-dist) var(--nm-blur) var(--nm-shadow-light-d),
+        calc(-1 * var(--nm-dist)) calc(-1 * var(--nm-dist)) var(--nm-blur) var(--nm-shadow-light-l) !important;
+    border-radius: 24px !important;
+}
+
+html:not(.dark) .nm-card-sm {
+    background: var(--nm-bg-light) !important;
+    border: 1px solid rgba(0,0,0,0.02) !important;
+    box-shadow:
+        var(--nm-dist-sm) var(--nm-dist-sm) var(--nm-blur-sm) var(--nm-shadow-light-d),
+        calc(-1 * var(--nm-dist-sm)) calc(-1 * var(--nm-dist-sm)) var(--nm-blur-sm) var(--nm-shadow-light-l) !important;
+    border-radius: 16px !important;
+}
+
+html:not(.dark) .nm-inset {
+    background: var(--nm-bg-light) !important;
+    border: 1px solid rgba(0,0,0,0.02) !important;
+    box-shadow:
+        inset var(--nm-dist-sm) var(--nm-dist-sm) var(--nm-blur-sm) var(--nm-shadow-light-d),
+        inset calc(-1 * var(--nm-dist-sm)) calc(-1 * var(--nm-dist-sm)) var(--nm-blur-sm) var(--nm-shadow-light-l) !important;
+    border-radius: 16px !important;
+}
+
+/* ── Neumorphic button — light ── */
+html:not(.dark) .nm-btn {
+    background: var(--nm-bg-light) !important;
+    border: 1px solid rgba(255, 255, 255, 0.8) !important;
+    box-shadow:
+        5px 5px 12px var(--nm-shadow-light-d),
+        -5px -5px 12px var(--nm-shadow-light-l) !important;
+    border-radius: 16px;
+    color: #1e3a8a !important;
+}
+
+html:not(.dark) .nm-btn:hover {
+    transform: translateY(-1.5px);
+    background: #ffffff !important;
+    border-color: rgba(255, 255, 255, 1) !important;
+    box-shadow:
+        var(--nm-dist-sm) var(--nm-dist-sm) var(--nm-blur-sm) var(--nm-shadow-light-d),
+        calc(-1 * var(--nm-dist-sm)) calc(-1 * var(--nm-dist-sm)) var(--nm-blur-sm) var(--nm-shadow-light-l) !important;
+}
+
+html:not(.dark) .nm-btn:active {
+    transform: translateY(0);
+    box-shadow:
+        inset 3px 3px 6px var(--nm-shadow-light-d),
+        inset -3px -3px 6px var(--nm-shadow-light-l) !important;
+}
+
+/* ── Sidebar — light ── */
+html:not(.dark) aside {
+    background: var(--nm-bg-light) !important;
+    border-right: 1px solid rgba(0,0,0,0.04) !important;
+    box-shadow:
+        8px 0 20px var(--nm-shadow-light-d),
+        -4px 0 10px var(--nm-shadow-light-l) !important;
+}
+
+html:not(.dark) aside a:hover,
+html:not(.dark) aside button:hover {
+    background: rgba(0,0,0,0.03) !important;
+    box-shadow: 2px 2px 6px var(--nm-shadow-light-d), -1px -1px 4px var(--nm-shadow-light-l) !important;
+}
+
+html:not(.dark) aside a.bg-\[\#2f6bfd\]\/20,
+html:not(.dark) aside a[class*="bg-[#2f6bfd]"] {
+    background: var(--brand) !important;
+    color: #ffffff !important;
+    box-shadow:
+        inset 3px 3px 8px rgba(0,0,0,0.20),
+        0 4px 14px var(--brand-glow) !important;
+}
+
+/* ── Header — light ── */
+html:not(.dark) header:not(.landing-header) {
+    background: var(--nm-bg-light) !important;
+    border-bottom: none !important;
+    box-shadow:
+        0 6px 18px var(--nm-shadow-light-d),
+        0 -2px 8px var(--nm-shadow-light-l) !important;
+}
+
+/* ── Input fields — light ── */
+html:not(.dark) input,
+html:not(.dark) textarea,
+html:not(.dark) select {
+    background: var(--nm-bg-light) !important;
+    border: 1px solid rgba(0,0,0,0.02) !important;
+    box-shadow:
+        var(--nm-dist-sm) var(--nm-dist-sm) var(--nm-blur-sm) var(--nm-shadow-light-d),
+        calc(-1 * var(--nm-dist-sm)) calc(-1 * var(--nm-dist-sm)) var(--nm-blur-sm) var(--nm-shadow-light-l) !important;
+}
+
+html:not(.dark) input:focus,
+html:not(.dark) textarea:focus,
+html:not(.dark) select:focus {
+    outline: none !important;
+    border-color: rgba(47,107,253,0.5) !important;
+    box-shadow:
+        var(--nm-dist-sm) var(--nm-dist-sm) var(--nm-blur-sm) var(--nm-shadow-light-d),
+        calc(-1 * var(--nm-dist-sm)) calc(-1 * var(--nm-dist-sm)) var(--nm-blur-sm) var(--nm-shadow-light-l),
+        0 0 0 2px rgba(47,107,253,0.18) !important;
+}
+
+/* ── Override generic Tailwind bg-white/[x] cards in light mode ── */
+html:not(.dark) .bg-white\/\[0\.04\],
+html:not(.dark) .bg-white\/\[0\.05\],
+html:not(.dark) .bg-white\/\[0\.06\],
+html:not(.dark) .bg-white\/\[0\.02\],
+html:not(.dark) .bg-white\/\[0\.03\] {
+    background: var(--nm-bg-light) !important;
+    border: none !important;
+    box-shadow:
+        8px 8px 18px var(--nm-shadow-light-d),
+        -6px -6px 14px var(--nm-shadow-light-l) !important;
+    backdrop-filter: none !important;
+}
+
+html:not(.dark) .backdrop-blur-2xl,
+html:not(.dark) .backdrop-blur-3xl {
+    backdrop-filter: none !important;
+}
+
+/* Exceptions — badge colors always stay semantic */
+html:not(.dark) .text-emerald-400 { color: #059669 !important; }
+html:not(.dark) .text-red-400     { color: #dc2626 !important; }
+html:not(.dark) .text-yellow-400  { color: #d97706 !important; }
+html:not(.dark) .text-blue-400    { color: #2563eb !important; }
+html:not(.dark) .text-cyan-400    { color: #0891b2 !important; }
+html:not(.dark) .text-purple-400  { color: #7c3aed !important; }
+
+/* White text on solid colored backgrounds (brand, emerald, red, green) always white */
+html:not(.dark) .nm-btn-brand,
+html:not(.dark) .nm-btn-brand *,
+html:not(.dark) .bg-\[\#2f6bfd\],
+html:not(.dark) .bg-\[\#2f6bfd\] *,
+html:not(.dark) .bg-blue-600,
+html:not(.dark) .bg-blue-600 *,
+html:not(.dark) .bg-blue-500,
+html:not(.dark) .bg-blue-500 *,
+html:not(.dark) .bg-emerald-500,
+html:not(.dark) .bg-emerald-500 *,
+html:not(.dark) .bg-emerald-600,
+html:not(.dark) .bg-emerald-600 *,
+html:not(.dark) .bg-red-500,
+html:not(.dark) .bg-red-500 *,
+html:not(.dark) .bg-red-600,
+html:not(.dark) .bg-red-600 *,
+html:not(.dark) .bg-green-500,
+html:not(.dark) .bg-green-500 *,
+html:not(.dark) .bg-green-600,
+html:not(.dark) .bg-green-600 *,
+html:not(.dark) button.bg-blue-600,
+html:not(.dark) a.bg-blue-600,
+html:not(.dark) button.bg-\[\#2f6bfd\],
+html:not(.dark) a.bg-\[\#2f6bfd\],
+html:not(.dark) .text-white,
+html:not(.dark) .text-white *,
+.nm-btn-brand,
+.nm-btn-brand *,
+.bg-emerald-500 *,
+.bg-red-500 * {
+    color: #ffffff !important;
+}
+
+html:not(.dark) tr:hover { background: rgba(0,0,0,0.02) !important; }
+
+/* ── Blue overlay panels (login/register right side) keep white text ── */
+html:not(.dark) .overlay,
+html:not(.dark) .overlay *,
+html:not(.dark) .overlay-panel,
+html:not(.dark) .overlay-panel * { color: #ffffff !important; }
+
+/* ── Theme toggle button ── */
+#theme-btn {
+    background: var(--nm-bg-dark);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: #ffffff;
+    cursor: pointer;
+    box-shadow:
+        4px 4px 10px var(--nm-shadow-dark-d),
+        -3px -3px 8px var(--nm-shadow-dark-l);
+}
+
+html:not(.dark) #theme-btn {
+    background: var(--nm-bg-light) !important;
+    border: none !important;
+    color: #1e3a8a !important;
+    box-shadow:
+        4px 4px 10px var(--nm-shadow-light-d),
+        -3px -3px 8px var(--nm-shadow-light-l) !important;
+}
+
+/* ── Dark-only background overrides ── */
+html.dark .bg-\[\#0c1638\],
+html.dark .bg-\[\#070d1f\],
+html.dark .bg-\[\#0d1844\] {
+    background: var(--nm-bg-dark) !important;
+}
+
+html.dark body { background: var(--nm-bg-dark) !important; }
+
+/* ── Gradient background overlay removal (nm doesn't use them) ── */
+html.dark .bg-gradient-to-br,
+html.dark [class*="from-[#0c1638]"] {
+    background: var(--nm-bg-dark) !important;
+}
+
+html:not(.dark) .bg-gradient-to-br,
+html:not(.dark) [class*="from-[#0c1638]"] {
+    background: var(--nm-bg-light) !important;
+}
+
+/* ── Selection ── */
+::selection { background: rgba(47,107,253,0.35); color: #fff; }
+
+/* ── View transitions ── */
+::view-transition-old(root),
+::view-transition-new(root) {
+    animation-duration: 0.22s;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Neumorphic stat number glow (dashboard big numbers) ── */
+html.dark .nm-stat-number {
+    color: #e2e8f0 !important;
+    text-shadow: 0 0 20px rgba(47,107,253,0.25), 0 2px 8px rgba(0,0,0,0.5);
+}
+
+html:not(.dark) .nm-stat-number {
+    color: #1e3a8a !important;
+    text-shadow: 1px 2px 4px var(--nm-shadow-light-d), -1px -1px 3px var(--nm-shadow-light-l);
+}
+
+/* ── Neumorphic dividers ── */
+html.dark  .nm-divider { border-color: rgba(255,255,255,0.04) !important; }
+html:not(.dark) .nm-divider { border-color: rgba(0,0,0,0.06) !important; }
+
+/* ── Chart canvas area ── */
+html.dark #messagesChart { filter: drop-shadow(0 0 8px rgba(47,107,253,0.2)); }
+
+/* ── Kanban / pipeline cards ── */
+html.dark .nm-kanban {
+    background: var(--nm-bg-dark) !important;
+    box-shadow:
+        6px 6px 14px var(--nm-shadow-dark-d),
+        -4px -4px 10px var(--nm-shadow-dark-l) !important;
+    border: 1px solid rgba(255,255,255,0.03) !important;
+    border-radius: 16px !important;
+}
+
+html:not(.dark) .nm-kanban {
+    background: var(--nm-bg-light) !important;
+    box-shadow:
+        6px 6px 14px var(--nm-shadow-light-d),
+        -4px -4px 10px var(--nm-shadow-light-l) !important;
+    border: none !important;
+    border-radius: 16px !important;
+}
+
+/* ── Modal / dialog ── */
+html.dark .nm-modal,
+html.dark [id*="modal"] .nm-card,
+html.dark [class*="fixed"] .nm-card {
+    background: var(--nm-bg-dark) !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 24px !important;
+}
+
+html:not(.dark) .nm-modal,
+html:not(.dark) [id*="modal"] .nm-card,
+html:not(.dark) [class*="fixed"] .nm-card {
+    background: #ffffff !important;
+    box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.06) !important;
+    border: 1px solid rgba(0, 0, 0, 0.06) !important;
+    border-radius: 24px !important;
+}
+
+/* ── Badge / tag ── */
+html.dark .nm-badge {
+    background: var(--nm-bg-dark) !important;
+    box-shadow:
+        2px 2px 5px var(--nm-shadow-dark-d),
+        -1px -1px 4px var(--nm-shadow-dark-l) !important;
+}
+
+html:not(.dark) .nm-badge {
+    background: var(--nm-bg-light) !important;
+    box-shadow:
+        2px 2px 5px var(--nm-shadow-light-d),
+        -1px -1px 4px var(--nm-shadow-light-l) !important;
+}
+
+/* ── WebRTC Softphone Dialpad Styling ── */
+#target_ext,
+html:not(.dark) #target_ext,
+html.dark #target_ext {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+.dialpad-btn {
+    background: #ffffff !important;
+    color: #1e3a8a !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+    transition: all 0.15s ease-in-out !important;
+}
+
+.dialpad-btn * {
+    color: inherit !important;
+}
+
+.dialpad-btn:hover {
+    background: #f8fafc !important;
+    transform: translateY(-1.5px) !important;
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08) !important;
+}
+
+.dialpad-btn:active {
+    transform: translateY(1px) scale(0.95) !important;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+html.dark .dialpad-btn {
+    background: #1e293b !important;
+    color: #f8fafc !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
+}
+
+html.dark .dialpad-btn:hover {
+    background: #273549 !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+html.dark .dialpad-btn:active {
+    background: #151d2a !important;
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4) !important;
+}
+
+.dialpad-action-call,
+html:not(.dark) .dialpad-action-call,
+html:not(.dark) .dialpad-action-call * {
+    background: #10b981 !important;
+    color: #ffffff !important;
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.35) !important;
+}
+
+.dialpad-action-call:hover {
+    background: #059669 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 12px 26px rgba(16, 185, 129, 0.45) !important;
+}
+
+.dialpad-action-call:active {
+    transform: translateY(0) scale(0.95) !important;
+}
+
+.dialpad-action-hangup,
+html:not(.dark) .dialpad-action-hangup,
+html:not(.dark) .dialpad-action-hangup * {
+    background: #ef4444 !important;
+    color: #ffffff !important;
+    box-shadow: 0 8px 20px rgba(239, 68, 68, 0.35) !important;
+}
+
+.dialpad-action-hangup:hover {
+    background: #dc2626 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 12px 26px rgba(239, 68, 68, 0.45) !important;
+}
+
+.dialpad-action-hangup:active {
+    transform: translateY(0) scale(0.95) !important;
+}
+
+/* =============================================================
+   ULTRA-PERFORMANCE & SILKY 60FPS SMOOTHNESS OPTIMIZATIONS
+   ============================================================= */
+
+/* 1. Hardware Acceleration for interactive cards & sidebars */
+.nm-card, 
+.nm-card-sm, 
+.feature-card, 
+aside, 
+button, 
+.sidebar-accordion,
+.sidebar-link {
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+
+/* 2. Ultra-Smooth Bezier Transitions */
+.transition-smooth {
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* 3. Smooth fade-in-up animation */
+@keyframes fadeInUpSmooth {
+    0% {
+        opacity: 0;
+        transform: translate3d(0, 10px, 0);
+    }
+    100% {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+.animate-fade-in-up {
+    animation: fadeInUpSmooth 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    will-change: transform, opacity;
+}
+
+/* 4. Content visibility optimization for large lists/tables */
+.content-auto {
+    content-visibility: auto;
+    contain-intrinsic-size: 1px 300px;
+}
+
+/* 5. Smooth Touch & Momentum Scrolling */
+main, aside, .overflow-y-auto, .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+}
+
