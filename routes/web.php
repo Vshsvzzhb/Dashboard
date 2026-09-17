@@ -286,6 +286,7 @@ Route::middleware('auth')->group(function () {
     })->name('webrtc.history.clear');
     
     Route::post('/tts-call', [TtsCallController::class, 'call']);
+    Route::match(['get', 'post'], '/tts-preview', [TtsCallController::class, 'preview'])->name('tts.preview');
 
     // TTS Voice Campaigns (Owner, Manager, Sales)
     Route::middleware('role:owner,manager,sales')->group(function () {

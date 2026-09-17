@@ -15,7 +15,11 @@
             <h1 class="text-3xl font-extrabold tracking-tight" style="letter-spacing:-0.02em;">TTS Voice Broadcast Overview</h1>
             <p class="text-xs mt-1 opacity-50">Jadwalkan dan broadcast panggilan suara otomatis (Text-to-Speech) ke daftar kontak.</p>
         </div>
-        <div class="flex items-center gap-2.5">
+        <div class="flex items-center gap-2.5 flex-wrap">
+            <button type="button" onclick="testCallSoftphone('9999')" id="btn_quick_test_call" class="nm-btn px-4 py-2.5 rounded-2xl font-bold text-xs transition flex items-center gap-2 cursor-pointer text-emerald-600 dark:text-emerald-400 hover:scale-105 border border-emerald-500/30 shadow-sm" title="Uji coba panggilan suara instan ke softphone 9999">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                <span>Test Call ke Softphone (9999)</span>
+            </button>
             <button onclick="toggleCampaignModal()" class="nm-btn-brand px-5 py-2.5 rounded-2xl font-bold text-xs shadow-lg transition flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14m-7-7h14"/></svg>
                 + Buat TTS Auto-Call
@@ -116,7 +120,12 @@
                     </div>
                 </div>
                 
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <button type="button" onclick="playCampaignMessage('{{ addslashes($c->message) }}', '{{ $c->session ?: 'id' }}')" title="Dengarkan Suara Pesan Ini" class="bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                        <span>Dengar</span>
+                    </button>
+
                     <form method="POST" action="{{ route('tts.campaigns.toggle', $c->id) }}" onsubmit="return confirm('Ubah status campaign ini?');">
                         @csrf @method('PATCH')
                         @if($c->status === 'paused')
@@ -212,6 +221,21 @@
                         </div>
                     </div>
                     <textarea name="message" id="messageInput" required rows="4" placeholder="Halo {nama}, ini adalah panggilan suara otomatis dari sistem..." class="w-full bg-white dark:bg-[#070d1f] border border-black/10 dark:border-white/10 rounded-xl p-3 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-[#2f6bfd] resize-none"></textarea>
+                    
+                    <div class="flex items-center gap-2 pt-1 flex-wrap">
+                        <button type="button" onclick="previewCampaignAudio()" id="btn_modal_preview" class="nm-btn px-3 py-1.5 rounded-xl text-xs font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1.5 transition cursor-pointer">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+                            <span>Dengarkan Preview Suara</span>
+                        </button>
+                        <button type="button" onclick="testModalCallSoftphone()" id="btn_modal_test_call" class="nm-btn px-3 py-1.5 rounded-xl text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 transition cursor-pointer">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                            <span>Uji Panggil ke Softphone (9999)</span>
+                        </button>
+                    </div>
+                    <div id="modal_audio_container" class="hidden pt-1">
+                        <audio id="modal_audio_player" controls class="w-full h-8 rounded-lg"></audio>
+                    </div>
+                    <div id="modal_test_toast" class="hidden p-2 rounded-xl text-xs font-semibold"></div>
                     <p class="text-[10px] opacity-60">Gunakan tag {nama} atau {nomor} untuk personalisasi, dan [uang] atau [digit] untuk ucapan angka natural.</p>
                 </div>
 
@@ -278,6 +302,143 @@
         input.value = text.substring(0, start) + tag + text.substring(end);
         input.focus();
         input.selectionStart = input.selectionEnd = start + tag.length;
+    }
+
+    // Audio Preview and Softphone Call Testing
+    let globalAudioPlayer = null;
+
+    function playCampaignMessage(msg, lang) {
+        if (!msg) return;
+        const url = '/tts-preview?text=' + encodeURIComponent(msg) + '&lang=' + encodeURIComponent(lang || 'id') + '&t=' + Date.now();
+        if (!globalAudioPlayer) {
+            globalAudioPlayer = new Audio();
+        }
+        globalAudioPlayer.src = url;
+        globalAudioPlayer.play().catch(e => {
+            alert('Silakan klik di halaman terlebih dahulu agar browser mengizinkan audio.');
+        });
+    }
+
+    async function previewCampaignAudio() {
+        const msgInput = document.getElementById('messageInput');
+        const langSelect = document.querySelector('select[name="lang"]');
+        const container = document.getElementById('modal_audio_container');
+        const player = document.getElementById('modal_audio_player');
+        const btn = document.getElementById('btn_modal_preview');
+
+        if (!msgInput || !msgInput.value.trim()) {
+            showModalToast('Ketik teks pesan suara terlebih dahulu!', 'error');
+            return;
+        }
+
+        const origBtn = btn ? btn.innerHTML : '';
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span>Memuat audio...</span>';
+        }
+
+        try {
+            const text = msgInput.value.trim().replace(/{nama}|{name}/g, 'Bapak Ibu').replace(/{nomor}|{phone}/g, '08123456789');
+            const lang = langSelect ? langSelect.value : 'id';
+            const url = '/tts-preview?text=' + encodeURIComponent(text) + '&lang=' + encodeURIComponent(lang) + '&t=' + Date.now();
+
+            if (player) {
+                player.src = url;
+                if (container) container.classList.remove('hidden');
+                await player.play();
+                showModalToast('Memutar suara...', 'success');
+            }
+        } catch(e) {
+            showModalToast('Gagal memutar audio: ' + e.message, 'error');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = origBtn;
+            }
+        }
+    }
+
+    async function testModalCallSoftphone() {
+        const msgInput = document.getElementById('messageInput');
+        const langSelect = document.querySelector('select[name="lang"]');
+        const btn = document.getElementById('btn_modal_test_call');
+
+        let text = msgInput ? msgInput.value.trim() : '';
+        if (!text) {
+            text = 'Halo, ini adalah pengujian suara otomatis ke softphone Anda.';
+        }
+        text = text.replace(/{nama}|{name}/g, 'Bapak Ibu').replace(/{nomor}|{phone}/g, '08123456789');
+        const lang = langSelect ? langSelect.value : 'id';
+
+        const orig = btn ? btn.innerHTML : '';
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span>Memanggil 9999...</span>';
+        }
+
+        try {
+            const res = await fetch('/tts-call', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                body: JSON.stringify({ text, target: '9999', lang })
+            });
+            const d = await res.json();
+            if (d.success) {
+                showModalToast('Panggilan terkirim ke 9999! Buka tab Softphone untuk mendengarkan.', 'success');
+            } else {
+                showModalToast('Gagal: ' + (d.error || 'Server error'), 'error');
+            }
+        } catch(e) {
+            showModalToast('Error: ' + e.message, 'error');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = orig;
+            }
+        }
+    }
+
+    async function testCallSoftphone(target) {
+        const btn = document.getElementById('btn_quick_test_call');
+        const orig = btn ? btn.innerHTML : '';
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span>Memanggil 9999...</span>';
+        }
+        try {
+            const res = await fetch('/tts-call', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                body: JSON.stringify({
+                    text: 'Halo! Ini adalah uji coba broadcast suara text to speech, sistem softphone berfungsi dengan baik.',
+                    target: target || '9999',
+                    lang: 'id'
+                })
+            });
+            const d = await res.json();
+            if (d.success) {
+                alert('Panggilan TTS berhasil dikirim ke ekstensi ' + target + '!\n\nBuka tab Softphone (9999) — panggilan akan otomatis dijawab dan dibacakan suaranya.');
+            } else {
+                alert('Gagal: ' + (d.error || 'Server error'));
+            }
+        } catch(e) {
+            alert('Error: ' + e.message);
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = orig;
+            }
+        }
+    }
+
+    function showModalToast(msg, type) {
+        const toast = document.getElementById('modal_test_toast');
+        if (!toast) return;
+        toast.textContent = msg;
+        toast.className = 'p-2.5 rounded-xl text-xs font-semibold ' + 
+            (type === 'success' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20');
+        toast.classList.remove('hidden');
+        setTimeout(() => { toast.classList.add('hidden'); }, 5000);
     }
 
     // Search filter & Auto Polling

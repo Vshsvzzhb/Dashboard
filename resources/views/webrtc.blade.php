@@ -235,7 +235,13 @@
                         </div>
                         <h3 class="text-sm font-bold">Veten Softphone</h3>
                     </div>
-                    <div class="flex items-center gap-1.5">
+                    <div class="flex items-center gap-1.5 flex-wrap justify-end">
+                        <button type="button" id="btn_toggle_auto_answer" onclick="toggleAutoAnswer()" 
+                                class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold transition cursor-pointer bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 hover:bg-blue-500/20" 
+                                title="Jawab otomatis saat Asterisk / TTS campaign menelepon ekstensi ini">
+                            <span id="auto_answer_dot" class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+                            <span id="auto_answer_label">Auto-Answer: AKTIF</span>
+                        </button>
                         <button type="button" id="btn_toggle_noise" onclick="toggleNoiseSuppression()" 
                                 class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold transition cursor-pointer bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20" 
                                 title="Klik untuk mengubah mode peredam suara latar / noise cancellation">
@@ -374,26 +380,39 @@
                 <div class="space-y-3.5">
                     <div>
                         <label class="block text-[11px] font-semibold opacity-60 mb-1">Pesan Suara</label>
-                        <textarea id="tts_text" rows="2" class="w-full bg-transparent border border-black/10 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#2f6bfd] transition" placeholder="Ketik pesan yang akan diucapkan oleh robot ke target..."></textarea>
+                        <textarea id="tts_text" rows="2" class="w-full bg-transparent border border-black/10 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#2f6bfd] transition" placeholder="Ketik pesan yang akan diucapkan oleh robot ke target...">Halo! Ini adalah uji coba broadcast suara text to speech, sistem softphone berfungsi normal.</textarea>
                     </div>
                     
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label class="block text-[11px] font-semibold opacity-60 mb-1">Target Ekstensi</label>
-                            <input type="text" id="tts_target" value="3030" class="w-full bg-transparent border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-center font-bold focus:outline-none focus:border-[#2f6bfd] transition">
+                            <input type="text" id="tts_target" value="9999" class="w-full bg-transparent border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-center font-bold focus:outline-none focus:border-[#2f6bfd] transition" title="Gunakan 9999 untuk langsung memanggil softphone ini">
+                            <p class="text-[9px] opacity-50 mt-0.5 text-center">Gunakan 9999 (softphone ini)</p>
                         </div>
                         <div>
                             <label class="block text-[11px] font-semibold opacity-60 mb-1">Bahasa</label>
                             <select id="tts_lang" class="w-full bg-transparent border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#2f6bfd] transition">
-                                <option class="text-black" value="id">Indonesia (ID)</option>
-                                <option class="text-black" value="en">English (US)</option>
+                                <option class="text-black" value="id">Indonesia (id-ID) Neural</option>
+                                <option class="text-black" value="en">English (US) Neural</option>
                             </select>
                         </div>
                     </div>
 
-                    <button id="btn_tts_call" onclick="startTTSCall()" class="nm-btn-brand w-full py-2.5 text-xs font-bold rounded-xl transition cursor-pointer">
-                        Kirim TTS Call
-                    </button>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                        <button type="button" onclick="previewTTSAudio()" id="btn_tts_preview" class="nm-btn py-2.5 px-3 text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer text-blue-600 dark:text-blue-400">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+                            <span>Dengarkan Preview</span>
+                        </button>
+                        <button type="button" id="btn_tts_call" onclick="startTTSCall()" class="nm-btn-brand py-2.5 px-3 text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                            <span>Kirim TTS Call</span>
+                        </button>
+                    </div>
+
+                    <div id="tts_preview_player" class="hidden pt-1">
+                        <audio id="tts_audio_element" controls class="w-full h-8 rounded-lg"></audio>
+                    </div>
+                    <div id="tts_status_toast" class="hidden p-2.5 rounded-xl text-xs font-semibold"></div>
                 </div>
             </div>
 
@@ -416,6 +435,44 @@
 
         </div>
 
+    </div>
+
+    {{-- High-Priority Incoming Call Modal Alert --}}
+    <div id="incoming_call_modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden">
+        <div class="fixed inset-0 bg-black/60 backdrop-blur-md"></div>
+        <div class="relative nm-modal p-6 sm:p-7 w-full max-w-sm space-y-5 z-10 shadow-2xl rounded-3xl border border-emerald-500/30 text-center animate-bounce-short">
+            {{-- Pulsing Ring Avatar --}}
+            <div class="relative w-20 h-20 mx-auto">
+                <div class="absolute inset-0 rounded-full bg-emerald-500/30 animate-ping"></div>
+                <div class="relative w-20 h-20 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center text-white shadow-xl shadow-emerald-500/40">
+                    <svg class="w-10 h-10 animate-pulse" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                </div>
+            </div>
+            
+            <div>
+                <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 mb-1">
+                    Panggilan Masuk
+                </span>
+                <h3 id="incoming_caller_name" class="text-lg font-black text-slate-800 dark:text-white">TTS Bot (Broadcast)</h3>
+                <p id="incoming_countdown_text" class="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">Menjawab otomatis dalam 1 detik...</p>
+            </div>
+
+            <div class="flex items-center justify-center gap-3 pt-2">
+                <button type="button" id="btn_modal_answer" onclick="acceptIncomingCall()" class="flex-1 py-3 px-4 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs shadow-lg shadow-emerald-500/30 flex items-center justify-center gap-2 cursor-pointer transition hover:scale-105">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                    <span>Jawab Panggilan</span>
+                </button>
+                <button type="button" id="btn_modal_reject" onclick="rejectIncomingCall()" class="py-3 px-4 rounded-2xl bg-red-500/10 hover:bg-red-500/20 text-red-500 font-bold text-xs border border-red-500/20 flex items-center justify-center gap-1 cursor-pointer transition hover:scale-105">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                    <span>Tolak</span>
+                </button>
+            </div>
+            
+            <div class="pt-1 flex items-center justify-center gap-2 text-[11px] opacity-70">
+                <input type="checkbox" id="modal_cb_auto_answer" onchange="toggleAutoAnswerCheckbox(this.checked)" class="rounded text-blue-600 focus:ring-0 cursor-pointer">
+                <label for="modal_cb_auto_answer" class="cursor-pointer select-none">Jawab otomatis di masa mendatang</label>
+            </div>
+        </div>
     </div>
 @endsection
 
@@ -501,6 +558,47 @@
             } catch(e) {}
         }
 
+        // --- TTS AUDIO PREVIEW FUNCTION ---
+        async function previewTTSAudio() {
+            const textEl = document.querySelector('textarea#tts_text');
+            const langEl = document.querySelector('select#tts_lang');
+            const btn = document.getElementById('btn_tts_preview');
+            const playerBox = document.getElementById('tts_preview_player');
+            const audioEl = document.getElementById('tts_audio_element');
+
+            if (!textEl || !langEl) return;
+            const text = textEl.value.trim();
+            const lang = langEl.value || 'id';
+
+            if (!text) {
+                showTtsToast('Silakan ketik pesan suara terlebih dahulu!', 'error');
+                return;
+            }
+
+            const originalBtn = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span>Memuat audio...</span>';
+            }
+
+            try {
+                const url = '/tts-preview?text=' + encodeURIComponent(text) + '&lang=' + encodeURIComponent(lang) + '&t=' + Date.now();
+                if (audioEl) {
+                    audioEl.src = url;
+                    if (playerBox) playerBox.classList.remove('hidden');
+                    await audioEl.play();
+                    showTtsToast('Memutar preview suara...', 'success');
+                }
+            } catch (err) {
+                showTtsToast('Gagal memutar audio: ' + err.message, 'error');
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalBtn;
+                }
+            }
+        }
+
         // --- TTS CALL FUNCTION ---
         async function startTTSCall() {
             const textEl   = document.querySelector('textarea#tts_text');
@@ -511,15 +609,21 @@
             if (!textEl || !targetEl || !langEl || !btn) return;
 
             let text = textEl.value.trim();
-            const target = targetEl.value.trim();
-            const lang   = langEl.value;
+            const target = targetEl.value.trim() || '9999';
+            const lang   = langEl.value || 'id';
 
-            if (!text) { alert('Silakan isi pesan TTS!'); return; }
-            if (!target) { alert('Silakan isi target ekstensi!'); return; }
+            if (!text) { 
+                showTtsToast('Silakan isi pesan suara TTS terlebih dahulu!', 'error');
+                return; 
+            }
+            if (!target) { 
+                showTtsToast('Silakan isi ekstensi target!', 'error');
+                return; 
+            }
 
             const originalBtnHtml = btn.innerHTML;
             btn.disabled = true;
-            btn.innerHTML = 'Memproses...';
+            btn.innerHTML = '<span>Memanggil ' + target + '...</span>';
 
             try {
                 const response = await fetch('/tts-call', {
@@ -530,17 +634,117 @@
 
                 const data = await response.json();
                 if (response.ok && data.success) {
-                    alert('Berhasil: ' + data.message);
+                    showTtsToast('Berhasil! Panggilan suara dikirim ke ekstensi ' + target, 'success');
                 } else {
                     throw new Error(data.error || 'Terjadi kesalahan pada server');
                 }
             } catch (err) {
-                alert('Error: ' + err.message);
+                showTtsToast('Gagal kirim panggilan: ' + err.message, 'error');
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = originalBtnHtml;
             }
         }
+
+        function showTtsToast(msg, type) {
+            const toast = document.getElementById('tts_status_toast');
+            if (!toast) return;
+            toast.textContent = msg;
+            toast.className = 'p-2.5 rounded-xl text-xs font-semibold ' + 
+                (type === 'success' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20');
+            toast.classList.remove('hidden');
+            setTimeout(() => { toast.classList.add('hidden'); }, 5000);
+        }
+
+        // --- AUTO-ANSWER & MODAL STATE ---
+        let isAutoAnswer = localStorage.getItem('webrtc_auto_answer') !== 'false'; // Default TRUE untuk kemudahan testing
+        let autoAnswerTimer = null;
+
+        window.toggleAutoAnswer = function() {
+            isAutoAnswer = !isAutoAnswer;
+            localStorage.setItem('webrtc_auto_answer', isAutoAnswer ? 'true' : 'false');
+            updateAutoAnswerUI();
+        };
+
+        window.toggleAutoAnswerCheckbox = function(val) {
+            isAutoAnswer = !!val;
+            localStorage.setItem('webrtc_auto_answer', isAutoAnswer ? 'true' : 'false');
+            updateAutoAnswerUI();
+        };
+
+        function updateAutoAnswerUI() {
+            const btn = document.getElementById('btn_toggle_auto_answer');
+            const dot = document.getElementById('auto_answer_dot');
+            const label = document.getElementById('auto_answer_label');
+            const cb = document.getElementById('modal_cb_auto_answer');
+
+            if (cb) cb.checked = isAutoAnswer;
+
+            if (isAutoAnswer) {
+                if (btn) {
+                    btn.className = 'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold transition cursor-pointer bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 hover:bg-blue-500/20';
+                }
+                if (dot) dot.className = 'w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse';
+                if (label) label.textContent = 'Auto-Answer: AKTIF';
+            } else {
+                if (btn) {
+                    btn.className = 'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold transition cursor-pointer bg-slate-200/60 dark:bg-white/10 text-slate-500 border border-slate-300 dark:border-white/10 hover:bg-slate-200';
+                }
+                if (dot) dot.className = 'w-1.5 h-1.5 rounded-full bg-slate-400';
+                if (label) label.textContent = 'Auto-Answer: NONAKTIF';
+            }
+        }
+
+        function showIncomingModal(caller) {
+            const modal = document.getElementById('incoming_call_modal');
+            const nameEl = document.getElementById('incoming_caller_name');
+            const cdEl = document.getElementById('incoming_countdown_text');
+            const cb = document.getElementById('modal_cb_auto_answer');
+            if (cb) cb.checked = isAutoAnswer;
+
+            if (nameEl) nameEl.textContent = caller || 'TTS Bot (Broadcast)';
+            if (modal) modal.classList.remove('hidden');
+
+            if (isAutoAnswer) {
+                if (cdEl) cdEl.textContent = 'Menjawab otomatis dalam 1 detik...';
+                if (autoAnswerTimer) clearTimeout(autoAnswerTimer);
+                autoAnswerTimer = setTimeout(() => {
+                    acceptIncomingCall();
+                }, 750);
+            } else {
+                if (cdEl) cdEl.textContent = 'Klik "Jawab Panggilan" untuk mendengarkan';
+            }
+        }
+
+        function hideIncomingModal() {
+            if (autoAnswerTimer) {
+                clearTimeout(autoAnswerTimer);
+                autoAnswerTimer = null;
+            }
+            const modal = document.getElementById('incoming_call_modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        window.acceptIncomingCall = function() {
+            hideIncomingModal();
+            stopIncomingChime();
+            unlockAudioContext();
+            if (window.activeSipSession && window.activeSipSession.direction === 'incoming') {
+                window.activeSipSession.answer({
+                    mediaConstraints: { audio: true, video: false },
+                    pcConfig: { iceServers: [], iceCandidatePoolSize: 0, bundlePolicy: 'max-bundle', rtcpMuxPolicy: 'require' }
+                });
+            }
+        };
+
+        window.rejectIncomingCall = function() {
+            hideIncomingModal();
+            stopIncomingChime();
+            if (window.activeSipSession) {
+                window.activeSipSession.terminate();
+            }
+            if (typeof resetCallUI === 'function') resetCallUI();
+        };
 
         // --- MAIN WEBRTC & SIP ENGINE ---
         document.addEventListener('DOMContentLoaded', () => {
@@ -1071,26 +1275,15 @@
                                 badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500 text-white animate-pulse';
                             }
                             playIncomingChime();
+                            showIncomingModal(caller);
 
                             btnCall.style.opacity = '1';
                             btnCall.style.pointerEvents = 'auto';
                             btnHangup.style.opacity = '1';
                             btnHangup.style.pointerEvents = 'auto';
 
-                            btnCall.onclick = () => {
-                                stopIncomingChime();
-                                unlockAudioContext();
-                                session.answer({
-                                    mediaConstraints: audioMediaConstraints,
-                                    pcConfig: pcConfig
-                                });
-                            };
-
-                            btnHangup.onclick = () => {
-                                stopIncomingChime();
-                                session.terminate();
-                                resetCallUI();
-                            };
+                            btnCall.onclick = () => acceptIncomingCall();
+                            btnHangup.onclick = () => rejectIncomingCall();
                         }
 
                         session.on('connecting', () => {
@@ -1111,6 +1304,7 @@
                         });
 
                         session.on('accepted', () => {
+                            hideIncomingModal();
                             stopIncomingChime();
                             unlockAudioContext();
                             if (remoteAudio && remoteAudio.paused) {
@@ -1136,6 +1330,7 @@
                         });
 
                         session.on('confirmed', () => {
+                            hideIncomingModal();
                             stopIncomingChime();
                             unlockAudioContext();
                             if (remoteAudio && remoteAudio.paused) {
@@ -1145,6 +1340,7 @@
                         });
 
                         session.on('ended', () => {
+                            hideIncomingModal();
                             stopStatsVisualizer();
                             if (callStatus) callStatus.textContent = 'Panggilan Berakhir';
                             const m = String(Math.floor(callSeconds / 60)).padStart(2, '0');
@@ -1162,6 +1358,7 @@
                         });
 
                         session.on('failed', (e) => {
+                            hideIncomingModal();
                             stopStatsVisualizer();
                             let reason = e.cause || 'Gagal Terhubung';
                             if (reason === 'Unavailable' || reason === 'Temporarily Unavailable') reason = 'Tujuan Offline / Tidak Aktif';
@@ -1275,6 +1472,7 @@
 
             // Auto-connect SIP on page load if credentials exist
             setTimeout(() => {
+                updateAutoAnswerUI();
                 if (!registered && btnReg && !btnReg.disabled) {
                     const ws = document.getElementById('sip_ws')?.value.trim();
                     const ext = document.getElementById('sip_extension')?.value.trim();
