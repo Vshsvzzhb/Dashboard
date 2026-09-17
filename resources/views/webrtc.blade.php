@@ -1,237 +1,534 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VetenCall - WebRTC Phone</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="{{ asset('js/jssip.min.js') }}"></script>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        ::-webkit-scrollbar { width: 5px; height: 5px; }
-        ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); }
-        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
-    </style>
-</head>
-<body class="bg-[#0c1638] text-white antialiased selection:bg-blue-500 selection:text-white">
+@extends('layouts.app')
 
-    <div class="min-h-screen bg-gradient-to-br from-[#0c1638] via-[#0d1844] to-[#1a2f8a] flex relative overflow-hidden">
-        
-        <img src="{{ asset('images/VetenAplikasi.png') }}" alt="" class="absolute -bottom-48 -left-48 w-[850px] max-w-none opacity-10 pointer-events-none select-none z-0">
-        <div class="absolute -bottom-24 -right-24 w-[600px] h-[600px] bg-purple-600/20 rounded-full blur-[160px] pointer-events-none"></div>
+@section('title', 'WebRTC Softphone — VetenCall')
+@section('page-title', 'WebRTC Softphone')
 
-        @include('layouts.sidebar')
+@push('scripts')
+<script src="{{ asset('js/jssip.min.js') }}"></script>
+@endpush
 
-        <main class="flex-1 flex flex-col min-w-0 z-10 overflow-y-auto">
-            
-            <header class="h-20 border-b border-white/10 px-6 md:px-10 flex items-center justify-between bg-white/[0.02] backdrop-blur-xl sticky top-0 z-30">
-                <div>
-                    <h1 class="text-xl font-bold text-white tracking-tight">WebRTC Softphone</h1>
-                    <p class="text-xs text-slate-300">Web-based VoIP client for RPL Team.</p>
-                </div>
-                
-                <div class="flex items-center gap-4">
-                    <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold tracking-wider">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> LIVE SYNC
+@section('content')
+<style>
+    /* Dedicated Softphone Tactile Dialpad Styling */
+    .nm-dial-key {
+        width: 68px !important;
+        height: 68px !important;
+        border-radius: 9999px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+        user-select: none !important;
+        transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        margin: 0 auto !important;
+    }
+    @media (min-width: 640px) {
+        .nm-dial-key {
+            width: 74px !important;
+            height: 74px !important;
+        }
+    }
+    .nm-dial-key:hover {
+        transform: translateY(-2px);
+    }
+    .nm-dial-key:active {
+        transform: scale(0.92) !important;
+    }
+    .nm-call-action-btn {
+        width: 68px !important;
+        height: 68px !important;
+        border-radius: 9999px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        cursor: pointer !important;
+    }
+    @media (min-width: 640px) {
+        .nm-call-action-btn {
+            width: 74px !important;
+            height: 74px !important;
+        }
+    }
+    .nm-call-action-btn:hover {
+        transform: translateY(-2px);
+    }
+    .nm-call-action-btn:active {
+        transform: scale(0.92) !important;
+    }
+</style>
+
+    {{-- Audio Element for WebRTC Stream --}}
+    <audio id="remoteAudio" autoplay playsinline></audio>
+
+    {{-- Title & Header Actions --}}
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight" style="letter-spacing:-0.02em;">WebRTC Softphone</h1>
+            <p class="text-xs mt-1 opacity-50">Browser VoIP Softphone & In-Call Voice Workspace</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <button type="button" onclick="quickDial('*43')" class="nm-btn px-4 py-2.5 rounded-2xl font-bold text-xs flex items-center gap-2 transition hover:text-[#2f6bfd]">
+                <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 003-3V5a3 3 0 10-6 0v6a3 3 0 003 3z"/></svg>
+                <span>Echo Test (*43)</span>
+            </button>
+        </div>
+    </div>
+
+    {{-- Microphone Permission Banner --}}
+    <div id="mic_banner" class="nm-inset border border-amber-500/30 rounded-2xl p-4 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+            </div>
+            <div>
+                <h4 id="mic_title" class="text-amber-600 dark:text-amber-400 font-bold text-xs sm:text-sm">Izin Mikrofon Diperlukan</h4>
+                <p id="mic_desc" class="text-amber-700/70 dark:text-amber-200/70 text-[11px] mt-0.5">Izinkan akses mikrofon browser agar panggilan suara dua arah dapat berjalan jernih.</p>
+            </div>
+        </div>
+        <button type="button" id="btn_request_mic" class="shrink-0 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-black font-bold text-xs rounded-xl shadow-md transition cursor-pointer">
+            Izinkan Mikrofon
+        </button>
+    </div>
+
+    {{-- Perfectly Balanced 2-Column Responsive Grid (6 cols left / 6 cols right or 7/5) --}}
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+        {{-- LEFT COLUMN: SIP Config & Speed Dial Directory (lg:col-span-7) --}}
+        <div class="lg:col-span-7 space-y-6">
+
+            {{-- Card 1: SIP Account Configuration --}}
+            <div class="nm-card p-6 sm:p-7 space-y-4">
+                <div class="flex items-center justify-between border-b border-black/5 dark:border-white/5 pb-3">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-500">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                        </div>
+                        <div>
+                            <h3 class="text-sm sm:text-base font-bold">SIP Account Configuration</h3>
+                            <p class="text-[11px] opacity-50">Koneksi WebSocket Asterisk WebRTC</p>
+                        </div>
                     </div>
-                    <div class="flex items-center gap-3 pl-3 border-l border-white/10">
-                        <div class="w-10 h-10 rounded-xl bg-purple-600/40 border border-purple-400/30 flex items-center justify-center font-bold text-xs text-white shadow-md">
-                            SU
+                    <div class="flex items-center gap-2">
+                        <span id="reg_dot" class="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
+                        <span id="reg_status" class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Offline</span>
+                    </div>
+                </div>
+
+                <form class="space-y-3.5" onsubmit="return false;">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div>
+                            <label class="block text-[11px] font-semibold opacity-60 mb-1">WebSocket URI</label>
+                            <input type="text" id="sip_ws" value="{{ auth()->user()->asterisk_ws_url ?? (request()->isSecure() ? 'wss://' . request()->getHost() . '/ws' : 'ws://' . request()->getHost() . ':8089/ws') }}" class="w-full bg-transparent border border-black/10 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs focus:outline-none focus:border-[#2f6bfd] transition font-mono">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold opacity-60 mb-1">SIP Domain / Host</label>
+                            <input type="text" id="sip_domain" value="{{ auth()->user()->asterisk_domain ?? request()->getHost() }}" class="w-full bg-transparent border border-black/10 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs focus:outline-none focus:border-[#2f6bfd] transition font-mono">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div>
+                            <label class="block text-[11px] font-semibold opacity-60 mb-1">Extension / Username</label>
+                            <input type="text" id="sip_extension" value="{{ auth()->user()->asterisk_exten ?? '9999' }}" class="w-full bg-transparent border border-black/10 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs font-mono font-bold focus:outline-none focus:border-[#2f6bfd] transition">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold opacity-60 mb-1">SIP Secret / Password</label>
+                            <div class="relative">
+                                <input type="password" id="sip_password" value="{{ auth()->user()->asterisk_password ?? 'Dashboard9999' }}" class="w-full bg-transparent border border-black/10 dark:border-white/10 rounded-xl px-3.5 py-2 pr-10 text-xs focus:outline-none focus:border-[#2f6bfd] transition">
+                                <button type="button" id="toggle_password" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white transition cursor-pointer">
+                                    <svg id="eye_icon" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-1">
+                        <button type="button" id="btn_register" class="nm-btn-brand w-full py-2.5 text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg>
+                            <span>Connect & Register</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            {{-- Card 2: Speed Dial & Extension Directory --}}
+            <div class="nm-card p-6 sm:p-7 space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-black/5 dark:border-white/5 pb-3">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                        </div>
+                        <div>
+                            <h3 class="text-sm sm:text-base font-bold">Speed Dial Ekstensi</h3>
+                            <p class="text-[11px] opacity-50">Klik tombol Call untuk langsung memanggil</p>
+                        </div>
+                    </div>
+                    
+                    {{-- Search Filter --}}
+                    <div class="w-full sm:w-48">
+                        <input type="text" id="search_ext_input" oninput="filterSpeedDial(this.value)" placeholder="Cari nama / nomor..." class="w-full bg-transparent border border-black/10 dark:border-white/10 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-[#2f6bfd] transition">
+                    </div>
+                </div>
+
+                @php
+                    $defaultList = [
+                        ['ext' => '3030', 'name' => 'Linphone Android (3030)', 'type' => 'SIP UDP'],
+                        ['ext' => '4040', 'name' => 'Linphone Mobile (4040)', 'type' => 'SIP UDP'],
+                        ['ext' => '102',  'name' => 'VoIP Client (102)', 'type' => 'SIP UDP'],
+                        ['ext' => '1010', 'name' => 'Agent Support (1010)', 'type' => 'WebRTC'],
+                        ['ext' => '2020', 'name' => 'Office Line (2020)', 'type' => 'WebRTC'],
+                        ['ext' => '9999', 'name' => 'Supervisor (9999)', 'type' => 'WebRTC'],
+                    ];
+                    $mergedUsers = collect($defaultList);
+                    if (isset($voipUsers) && $voipUsers->count() > 0) {
+                        foreach ($voipUsers as $vu) {
+                            if (!$mergedUsers->contains('ext', $vu->phone_number)) {
+                                $mergedUsers->push([
+                                    'ext' => $vu->phone_number,
+                                    'name' => $vu->username ?? ('Ekstensi ' . $vu->phone_number),
+                                    'type' => 'SIP UDP'
+                                ]);
+                            }
+                        }
+                    }
+                @endphp
+
+                <div id="speed_dial_list" class="space-y-2.5 max-h-[460px] overflow-y-auto pr-1">
+                    @foreach($mergedUsers as $contact)
+                        <div class="speed-dial-item flex items-center justify-between p-3 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/5 dark:border-white/5 hover:border-blue-500/30 transition" data-search="{{ strtolower($contact['name'] . ' ' . $contact['ext']) }}">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 flex items-center justify-center font-bold text-xs shrink-0">
+                                    {{ substr($contact['ext'], 0, 2) }}
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <p class="font-bold text-xs">{{ $contact['name'] }}</p>
+                                        <span class="text-[9px] px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/10 font-mono opacity-70">{{ $contact['type'] }}</span>
+                                    </div>
+                                    <p class="text-[10px] opacity-50 font-mono mt-0.5">Ext: {{ $contact['ext'] }}</p>
+                                </div>
+                            </div>
+                            <button type="button" onclick="quickDial('{{ $contact['ext'] }}')" class="nm-btn px-3.5 py-1.5 rounded-xl font-bold text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 transition hover:scale-105 cursor-pointer">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                                <span>Call</span>
+                            </button>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
+        </div>
+
+        {{-- RIGHT COLUMN: Softphone Dialpad, TTS Auto Call & Live Console (lg:col-span-5) --}}
+        <div class="lg:col-span-5 space-y-6">
+
+            {{-- Card 1: Softphone Dialpad Unit --}}
+            <div class="nm-card p-6 sm:p-7 flex flex-col items-center justify-between space-y-5">
+                
+                {{-- Card Header --}}
+                <div class="flex items-center justify-between w-full border-b border-black/5 dark:border-white/5 pb-3">
+                    <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-500">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                        </div>
+                        <h3 class="text-sm font-bold">Veten Softphone</h3>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <button type="button" id="btn_toggle_noise" onclick="toggleNoiseSuppression()" 
+                                class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold transition cursor-pointer bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20" 
+                                title="Klik untuk mengubah mode peredam suara latar / noise cancellation">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span id="noise_label">Peredam Bising: AKTIF</span>
+                        </button>
+                        <span id="call_status_badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-200/60 dark:bg-white/10 text-slate-600 dark:text-slate-300">Ready</span>
+                    </div>
+                </div>
+
+                {{-- Phone Screen Display (Clean Inset Box) --}}
+                <div class="nm-inset w-full p-4 rounded-2xl flex flex-col items-center justify-center relative">
+                    <div class="flex items-center justify-center relative w-full px-8">
+                        <input type="text" id="target_ext" value="3030" placeholder="Ketik nomor..." 
+                               class="w-full text-center text-3xl sm:text-4xl font-semibold tracking-wider text-slate-800 dark:text-white focus:outline-none placeholder-slate-300 dark:placeholder-slate-600 font-mono"
+                               style="border: none !important; box-shadow: none !important; background: transparent !important; outline: none !important;">
+                        
+                        <button type="button" id="btn_backspace" class="absolute right-0 top-1/2 -translate-y-1/2 text-slate-400 hover:text-red-500 dark:hover:text-red-400 p-2 transition active:scale-90 cursor-pointer" title="Hapus Digit">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/><line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/></svg>
+                        </button>
+                    </div>
+
+                    <p id="call_status" class="text-[11px] text-slate-400 font-medium mt-1">Ready to call</p>
+                    <span id="call_timer" class="font-mono text-xs font-bold text-emerald-500 mt-0.5 hidden">00:00</span>
+
+                    {{-- Live Studio Voice Activity & Noise Gate Visualizer --}}
+                    <div id="mic_meter_wrapper" class="flex items-center gap-2 mt-2 px-3 py-1 rounded-full bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 transition-all select-none" title="Studio Voice Gate & Noise Suppression">
+                        <span class="relative flex h-2 w-2">
+                            <span id="gate_ping" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 hidden"></span>
+                            <span id="gate_dot" class="relative inline-flex rounded-full h-2 w-2 bg-slate-400"></span>
+                        </span>
+                        <div class="w-20 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden relative">
+                            <div id="mic_meter_bar" class="h-full bg-emerald-500 rounded-full transition-all duration-75 w-0"></div>
+                        </div>
+                        <span id="gate_badge" class="text-[9px] font-mono font-bold tracking-wider text-slate-400 uppercase">SIAP</span>
+                    </div>
+
+                    {{-- In-Call Action Bar (Mute, Hold, Noise Filter & Volume) --}}
+                    <div id="incall_controls" class="flex flex-col items-center justify-center gap-2 mt-2.5 w-full hidden">
+                        <div class="flex items-center justify-center gap-2 flex-wrap">
+                            <button type="button" id="btn_toggle_mute" onclick="toggleMute()" class="nm-btn px-3 py-1 rounded-xl text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer">
+                                <span id="mute_label">Mute Mic</span>
+                            </button>
+                            <button type="button" id="btn_toggle_hold" onclick="toggleHold()" class="nm-btn px-3 py-1 rounded-xl text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer">
+                                <span id="hold_label">Hold</span>
+                            </button>
+                            <button type="button" id="btn_incall_noise" onclick="toggleNoiseSuppression()" class="nm-btn px-3 py-1 rounded-xl text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer text-emerald-600 dark:text-emerald-400" title="Peredam Suara Latar / Background Noise">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                <span id="incall_noise_label">Peredam ON</span>
+                            </button>
+                        </div>
+                        <div class="flex items-center gap-2 pt-1">
+                            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
+                            <input type="range" id="vol_slider" min="0.1" max="1" step="0.05" value="0.60" oninput="setAudioVolume(this.value)" class="w-28 accent-blue-500 cursor-pointer" title="Volume Suara">
+                            <span id="vol_val" class="text-[10px] font-mono text-slate-400 font-bold">60%</span>
                         </div>
                     </div>
                 </div>
-            </header>
 
-            <div class="p-6 md:p-10 space-y-6 max-w-7xl w-full mx-auto pb-20">
-                
-                {{-- Microphone Alert --}}
-                <div class="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 flex items-center justify-between shadow-lg">
-                    <div>
-                        <h4 class="text-amber-400 font-bold text-sm">Izin Mikrofon Diperlukan</h4>
-                        <p class="text-amber-200/70 text-xs mt-0.5">Klik tombol di sebelah kanan atau klik ikon lock di address bar → Microphone → Allow</p>
-                    </div>
-                    <button class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-black font-bold text-xs rounded-xl transition">
-                        Izinkan Mikrofon
+                {{-- 3x4 Neumorphic Keypad Buttons Grid --}}
+                <div class="grid grid-cols-3 gap-y-3.5 gap-x-4 w-full max-w-[270px] mx-auto select-none justify-center">
+                    <button type="button" onclick="dialDigit('1')" class="nm-btn nm-dial-key">
+                        <span class="text-2xl font-semibold leading-none">1</span>
+                        <span class="text-[9px] text-slate-400 dark:text-slate-500 font-medium tracking-widest leading-none mt-1">&nbsp;</span>
+                    </button>
+                    <button type="button" onclick="dialDigit('2')" class="nm-btn nm-dial-key">
+                        <span class="text-2xl font-semibold leading-none">2</span>
+                        <span class="text-[9px] text-slate-400 dark:text-slate-500 font-bold tracking-widest leading-none mt-1">ABC</span>
+                    </button>
+                    <button type="button" onclick="dialDigit('3')" class="nm-btn nm-dial-key">
+                        <span class="text-2xl font-semibold leading-none">3</span>
+                        <span class="text-[9px] text-slate-400 dark:text-slate-500 font-bold tracking-widest leading-none mt-1">DEF</span>
+                    </button>
+                    
+                    <button type="button" onclick="dialDigit('4')" class="nm-btn nm-dial-key">
+                        <span class="text-2xl font-semibold leading-none">4</span>
+                        <span class="text-[9px] text-slate-400 dark:text-slate-500 font-bold tracking-widest leading-none mt-1">GHI</span>
+                    </button>
+                    <button type="button" onclick="dialDigit('5')" class="nm-btn nm-dial-key">
+                        <span class="text-2xl font-semibold leading-none">5</span>
+                        <span class="text-[9px] text-slate-400 dark:text-slate-500 font-bold tracking-widest leading-none mt-1">JKL</span>
+                    </button>
+                    <button type="button" onclick="dialDigit('6')" class="nm-btn nm-dial-key">
+                        <span class="text-2xl font-semibold leading-none">6</span>
+                        <span class="text-[9px] text-slate-400 dark:text-slate-500 font-bold tracking-widest leading-none mt-1">MNO</span>
+                    </button>
+                    
+                    <button type="button" onclick="dialDigit('7')" class="nm-btn nm-dial-key">
+                        <span class="text-2xl font-semibold leading-none">7</span>
+                        <span class="text-[9px] text-slate-400 dark:text-slate-500 font-bold tracking-widest leading-none mt-1">PQRS</span>
+                    </button>
+                    <button type="button" onclick="dialDigit('8')" class="nm-btn nm-dial-key">
+                        <span class="text-2xl font-semibold leading-none">8</span>
+                        <span class="text-[9px] text-slate-400 dark:text-slate-500 font-bold tracking-widest leading-none mt-1">TUV</span>
+                    </button>
+                    <button type="button" onclick="dialDigit('9')" class="nm-btn nm-dial-key">
+                        <span class="text-2xl font-semibold leading-none">9</span>
+                        <span class="text-[9px] text-slate-400 dark:text-slate-500 font-bold tracking-widest leading-none mt-1">WXYZ</span>
+                    </button>
+                    
+                    <button type="button" onclick="dialDigit('*')" class="nm-btn nm-dial-key">
+                        <span class="text-2xl font-semibold leading-none text-slate-400 dark:text-slate-400">*</span>
+                        <span class="text-[9px] text-slate-400 dark:text-slate-500 font-medium tracking-widest leading-none mt-1">&nbsp;</span>
+                    </button>
+                    <button type="button" onclick="dialDigit('0')" class="nm-btn nm-dial-key">
+                        <span class="text-2xl font-semibold leading-none">0</span>
+                        <span class="text-[9px] text-slate-400 dark:text-slate-500 font-bold tracking-widest leading-none mt-1">+</span>
+                    </button>
+                    <button type="button" onclick="dialDigit('#')" class="nm-btn nm-dial-key">
+                        <span class="text-2xl font-semibold leading-none text-slate-400 dark:text-slate-400">#</span>
+                        <span class="text-[9px] text-slate-400 dark:text-slate-500 font-medium tracking-widest leading-none mt-1">&nbsp;</span>
                     </button>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    
-                    {{-- SIP Configuration Box --}}
-                    <div class="bg-white/[0.05] backdrop-blur-2xl border border-white/10 rounded-3xl p-6 shadow-2xl flex flex-col justify-center">
-                        <div class="flex items-center gap-2 mb-6">
-                            <svg class="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                            <h3 class="text-base font-bold text-white">SIP Configuration</h3>
-                        </div>
-
-                        <form class="space-y-4">
-                            <div>
-                                <label class="block text-[11px] font-semibold text-slate-400 mb-1">WebSocket URI</label>
-                                <input type="text" id="sip_ws" value="ws://52.2.21.5:8088/ws" class="w-full bg-[#070d1f] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500">
-                            </div>
-                            <div>
-                                <label class="block text-[11px] font-semibold text-slate-400 mb-1">SIP Domain/Host</label>
-                                <input type="text" id="sip_domain" value="52.2.21.5" class="w-full bg-[#070d1f] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500">
-                            </div>
-                            <div>
-                                <label class="block text-[11px] font-semibold text-slate-400 mb-1">Extension</label>
-                                <input type="text" id="sip_extension" value="101" class="w-full bg-[#070d1f] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500">
-                            </div>
-                            <div>
-                                <label class="block text-[11px] font-semibold text-slate-400 mb-1">Password</label>
-                                <div class="relative">
-                                    <input type="password" id="sip_password" value="Rahasia101" class="w-full bg-[#070d1f] border border-white/10 rounded-xl px-4 py-2.5 pr-10 text-xs text-white focus:outline-none focus:border-blue-500">
-                                    <button type="button" id="toggle_password" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition" title="Show/Hide Password">
-                                        <svg id="eye_icon" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-                                        </svg>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div class="pt-2">
-                                <button type="button" id="btn_register" class="w-full py-3 bg-[#2f6bfd] hover:bg-blue-600 text-white text-xs font-bold rounded-xl shadow-lg shadow-blue-600/30 transition flex items-center justify-center gap-2">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg>
-                                    Connect & Register
-                                </button>
-                                <p id="reg_status" class="text-center text-[10px] text-slate-500 font-bold uppercase mt-3">Offline</p>
-                            </div>
-                        </form>
-                    </div>
-
-                    {{-- Dialpad Box --}}
-                    <div class="bg-[#0b1228] border border-white/10 rounded-[40px] p-8 max-w-[320px] w-full mx-auto shadow-2xl flex flex-col items-center">
-                        <div class="text-center w-full mb-6">
-                            <input type="text" id="target_ext" placeholder="102" class="w-full bg-transparent border-none text-white text-5xl font-light tracking-widest text-center focus:outline-none placeholder-white/20">
-                            <p id="call_status" class="text-xs text-slate-400 mt-2 h-4">Ready to call</p>
-                        </div>
-
-                        <div class="grid grid-cols-3 gap-5 w-full">
-                            <button onclick="document.getElementById('target_ext').value += '1'" class="w-[70px] h-[70px] rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-2xl font-light text-white transition">1</button>
-                            <button onclick="document.getElementById('target_ext').value += '2'" class="w-[70px] h-[70px] rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-2xl font-light text-white transition">2</button>
-                            <button onclick="document.getElementById('target_ext').value += '3'" class="w-[70px] h-[70px] rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-2xl font-light text-white transition">3</button>
-                            <button onclick="document.getElementById('target_ext').value += '4'" class="w-[70px] h-[70px] rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-2xl font-light text-white transition">4</button>
-                            <button onclick="document.getElementById('target_ext').value += '5'" class="w-[70px] h-[70px] rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-2xl font-light text-white transition">5</button>
-                            <button onclick="document.getElementById('target_ext').value += '6'" class="w-[70px] h-[70px] rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-2xl font-light text-white transition">6</button>
-                            <button onclick="document.getElementById('target_ext').value += '7'" class="w-[70px] h-[70px] rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-2xl font-light text-white transition">7</button>
-                            <button onclick="document.getElementById('target_ext').value += '8'" class="w-[70px] h-[70px] rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-2xl font-light text-white transition">8</button>
-                            <button onclick="document.getElementById('target_ext').value += '9'" class="w-[70px] h-[70px] rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-2xl font-light text-white transition">9</button>
-                            <button onclick="document.getElementById('target_ext').value += '*'" class="w-[70px] h-[70px] rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-2xl font-light text-slate-400 transition">*</button>
-                            <button onclick="document.getElementById('target_ext').value += '0'" class="w-[70px] h-[70px] rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-2xl font-light text-white transition">0</button>
-                            <button onclick="document.getElementById('target_ext').value += '#'" class="w-[70px] h-[70px] rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-2xl font-light text-slate-400 transition">#</button>
-                        </div>
-
-                        <div class="flex gap-6 mt-8">
-                            <button id="btn_call" class="w-[70px] h-[70px] rounded-full bg-emerald-500 hover:bg-emerald-600 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20 transition">
-                                <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                            </button>
-                            <button id="btn_hangup" class="w-[70px] h-[70px] rounded-full bg-red-500/20 text-red-500 flex items-center justify-center shadow-lg transition pointer-events-none opacity-50">
-                                <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-3.33-2.67m-2.67-3.34a19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91"/><line x1="22" x2="2" y1="2" y2="22"/></svg>
-                            </button>
-                        </div>
-                    </div>
+                {{-- Action Buttons: Green Call & Red End Call --}}
+                <div class="flex items-center justify-center gap-8 pt-2 w-full">
+                    <button type="button" id="btn_call" class="nm-call-action-btn bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/30" style="background-color: #10b981 !important; color: #ffffff !important; border: none !important;" title="Panggil (Enter)">
+                        <svg class="w-7 h-7 sm:w-8 sm:h-8 text-white" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                    </button>
+                    <button type="button" id="btn_hangup" class="nm-call-action-btn bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/30 opacity-30 pointer-events-none" style="background-color: #ef4444 !important; color: #ffffff !important; border: none !important;" title="Akhiri Panggilan">
+                        <svg class="w-7 h-7 sm:w-8 sm:h-8 text-white" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-3.33-2.67m-2.67-3.34a19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91"/><line x1="22" x2="2" y1="2" y2="22"/></svg>
+                    </button>
                 </div>
-
-                {{-- TTS Section --}}
-                <div class="bg-[#0077ff]/10 border border-[#0077ff]/30 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
-                    <div class="absolute top-0 right-0 w-64 h-64 bg-[#0077ff]/10 rounded-full blur-[80px] pointer-events-none"></div>
-                    
-                    <div class="flex items-center gap-3 mb-2">
-                        <span class="px-2 py-1 rounded bg-[#0077ff] text-white text-[10px] font-black tracking-wider">TTS</span>
-                        <h3 class="text-base font-bold text-white">Text-to-Speech Auto Call</h3>
-                    </div>
-                    <p class="text-xs text-blue-200/70 mb-6">Ketik pesan → sistem otomatis menelepon ekstensi tujuan dan memperdengarkan suara TTS.</p>
-
-                    <div class="flex flex-col md:flex-row gap-6">
-                        <div class="flex-1 space-y-2">
-                            <label class="block text-[11px] font-semibold text-blue-300">Pesan yang akan diucapkan</label>
-                            <textarea id="tts_text" rows="4" class="w-full bg-[#070d1f]/80 border border-[#0077ff]/30 rounded-xl px-4 py-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-400" placeholder="Contoh: Halo, ini adalah pesan otomatis dari sistem VetenCall. Mohon segera menghubungi admin."></textarea>
-                        </div>
-                        
-                        <div class="w-full md:w-64 space-y-4">
-                            <div>
-                                <label class="block text-[11px] font-semibold text-blue-300 mb-1">Ekstensi Tujuan</label>
-                                <input type="text" id="tts_target" value="102" class="w-full bg-[#070d1f]/80 border border-[#0077ff]/30 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-400 text-center font-bold">
-                            </div>
-                            <div>
-                                <label class="block text-[11px] font-semibold text-blue-300 mb-1">Bahasa</label>
-                                <select id="tts_lang" class="w-full bg-[#070d1f]/80 border border-[#0077ff]/30 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-400">
-                                    <option value="id">Indonesia</option>
-                                    <option value="en">English (US)</option>
-                                </select>
-                            </div>
-                            <button id="btn_tts_call" onclick="startTTSCall()" class="w-full py-3 bg-[#0077ff] hover:bg-blue-600 text-white text-xs font-bold rounded-xl shadow-lg transition">
-                                Call TTS Call
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Debug Log --}}
-                <div class="bg-[#050914] border border-white/10 rounded-2xl relative shadow-inner h-48 flex flex-col">
-                    <div class="flex items-center justify-between px-4 py-2 border-b border-white/5">
-                        <span class="text-[10px] font-mono text-slate-500">SIP Debug Log</span>
-                        <button class="text-[10px] bg-white/5 hover:bg-white/10 px-2 py-1 rounded text-slate-400 transition">Clear</button>
-                    </div>
-                    <div id="sip_log" class="p-4 flex-1 overflow-y-auto font-mono text-xs text-slate-500 space-y-1">
-                        <p>> System initialized.</p>
-                        <p>> Waiting for configuration and microphone permissions...</p>
-                    </div>
-                </div>
-
             </div>
-        </main>
-    </div>
 
-    {{-- Script TTS Call --}}
+            {{-- Card 2: Text-to-Speech (TTS) Auto Call --}}
+            <div class="nm-card p-6 sm:p-7 space-y-4">
+                <div class="flex items-center gap-2.5 border-b border-black/5 dark:border-white/5 pb-3">
+                    <span class="px-2 py-0.5 rounded-lg bg-[#2f6bfd] text-white text-[10px] font-black tracking-wider">TTS</span>
+                    <div>
+                        <h3 class="text-sm sm:text-base font-bold">Text-to-Speech Auto Call</h3>
+                        <p class="text-[11px] opacity-50">Sistem otomatis menelepon target dan membacakan pesan suara</p>
+                    </div>
+                </div>
+
+                <div class="space-y-3.5">
+                    <div>
+                        <label class="block text-[11px] font-semibold opacity-60 mb-1">Pesan Suara</label>
+                        <textarea id="tts_text" rows="2" class="w-full bg-transparent border border-black/10 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#2f6bfd] transition" placeholder="Ketik pesan yang akan diucapkan oleh robot ke target..."></textarea>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-semibold opacity-60 mb-1">Target Ekstensi</label>
+                            <input type="text" id="tts_target" value="3030" class="w-full bg-transparent border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-center font-bold focus:outline-none focus:border-[#2f6bfd] transition">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold opacity-60 mb-1">Bahasa</label>
+                            <select id="tts_lang" class="w-full bg-transparent border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#2f6bfd] transition">
+                                <option class="text-black" value="id">Indonesia (ID)</option>
+                                <option class="text-black" value="en">English (US)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button id="btn_tts_call" onclick="startTTSCall()" class="nm-btn-brand w-full py-2.5 text-xs font-bold rounded-xl transition cursor-pointer">
+                        Kirim TTS Call
+                    </button>
+                </div>
+            </div>
+
+            {{-- Card 3: SIP Live Console & Diagnostics Card --}}
+            <div class="nm-card p-5 space-y-2.5">
+                <div class="flex items-center justify-between border-b border-black/5 dark:border-white/5 pb-2">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                        <span class="text-xs font-bold">SIP Live Console</span>
+                    </div>
+                    <button type="button" onclick="document.getElementById('sip_log').innerHTML=''" class="text-[10px] nm-btn px-2.5 py-1 rounded-lg font-bold opacity-60 hover:opacity-100 transition cursor-pointer">
+                        Clear Log
+                    </button>
+                </div>
+                <div id="sip_log" class="nm-inset p-3.5 rounded-xl h-32 overflow-y-auto font-mono text-[10px] opacity-75 space-y-1">
+                    <p class="text-emerald-500">> System softphone ready.</p>
+                    <p class="text-slate-400">> Click "Connect & Register" to activate SIP connection.</p>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+@endsection
+
+@push('scripts')
     <script>
-        // Setup CSRF Token
         const csrfToken = '{{ csrf_token() }}';
-        
+
+        // Set remote audio playback volume
+        window.setAudioVolume = function(vol) {
+            const v = parseFloat(vol) || 0.60;
+            const remoteAudio = document.getElementById('remoteAudio');
+            if (remoteAudio) remoteAudio.volume = v;
+            const valEl = document.getElementById('vol_val');
+            if (valEl) valEl.textContent = Math.round(v * 100) + '%';
+        };
+
+        // Filter Speed Dial Directory
+        function filterSpeedDial(query) {
+            const q = query.toLowerCase().trim();
+            const items = document.querySelectorAll('.speed-dial-item');
+            items.forEach(item => {
+                const text = item.getAttribute('data-search') || '';
+                if (!q || text.includes(q)) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+
+        function dialDigit(d) {
+            const el = document.getElementById('target_ext');
+            if (el) el.value += d;
+            playDTMFTone(d);
+
+            if (window.activeSipSession && typeof window.activeSipSession.sendDTMF === 'function') {
+                try { window.activeSipSession.sendDTMF(d); } catch(e) {}
+            }
+        }
+
+        function quickDial(number) {
+            const el = document.getElementById('target_ext');
+            if (el) el.value = number;
+            const btnCall = document.getElementById('btn_call');
+            if (btnCall && !btnCall.disabled) {
+                btnCall.click();
+            }
+        }
+
+        // --- DTMF SOUND SYNTHESIS (Gentle Subtle Feedback) ---
+        let dtmfAudioCtx = null;
+        function playDTMFTone(digit) {
+            try {
+                if (!dtmfAudioCtx) dtmfAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (dtmfAudioCtx.state === 'suspended') dtmfAudioCtx.resume();
+                
+                const freqs = {
+                    '1': [697, 1209], '2': [697, 1336], '3': [697, 1477],
+                    '4': [770, 1209], '5': [770, 1336], '6': [770, 1477],
+                    '7': [852, 1209], '8': [852, 1336], '9': [852, 1477],
+                    '*': [941, 1209], '0': [941, 1336], '#': [941, 1477]
+                };
+                const pair = freqs[digit];
+                if (!pair) return;
+
+                const osc1 = dtmfAudioCtx.createOscillator();
+                const osc2 = dtmfAudioCtx.createOscillator();
+                const gain = dtmfAudioCtx.createGain();
+
+                osc1.frequency.value = pair[0];
+                osc2.frequency.value = pair[1];
+                gain.gain.setValueAtTime(0.015, dtmfAudioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, dtmfAudioCtx.currentTime + 0.08);
+
+                osc1.connect(gain);
+                osc2.connect(gain);
+                gain.connect(dtmfAudioCtx.destination);
+
+                osc1.start();
+                osc2.start();
+                osc1.stop(dtmfAudioCtx.currentTime + 0.08);
+                osc2.stop(dtmfAudioCtx.currentTime + 0.08);
+            } catch(e) {}
+        }
+
+        // --- TTS CALL FUNCTION ---
         async function startTTSCall() {
-            const textEl   = document.querySelector('textarea');
-            const targetEl = document.querySelector('input[value="102"]');
-            const langEl   = document.querySelector('select');
-            const btn      = document.querySelector('button.bg-\\[\\#0077ff\\]');
+            const textEl   = document.querySelector('textarea#tts_text');
+            const targetEl = document.querySelector('input#tts_target');
+            const langEl   = document.querySelector('select#tts_lang');
+            const btn      = document.getElementById('btn_tts_call');
 
             if (!textEl || !targetEl || !langEl || !btn) return;
 
-            // Pisahkan angka dengan spasi agar TTS membaca digit per digit
-            // Contoh: "123" diubah jadi "1 2 3 "
             let text = textEl.value.trim();
-            text = text.replace(/([0-9])/g, '$1 ').replace(/\s+/g, ' ').trim();
-            
             const target = targetEl.value.trim();
             const lang   = langEl.value;
 
-            if (!text) {
-                alert('Silakan isi pesan yang akan diucapkan!');
-                return;
-            }
-            if (!target) {
-                alert('Silakan isi ekstensi tujuan!');
-                return;
-            }
+            if (!text) { alert('Silakan isi pesan TTS!'); return; }
+            if (!target) { alert('Silakan isi target ekstensi!'); return; }
 
             const originalBtnHtml = btn.innerHTML;
             btn.disabled = true;
-            btn.innerHTML = 'Memproses TTS Call...';
+            btn.innerHTML = 'Memproses...';
 
             try {
                 const response = await fetch('/tts-call', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken
-                    },
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
                     body: JSON.stringify({ text, target, lang })
                 });
 
                 const data = await response.json();
-
                 if (response.ok && data.success) {
                     alert('Berhasil: ' + data.message);
                 } else {
@@ -239,108 +536,422 @@
                 }
             } catch (err) {
                 alert('Error: ' + err.message);
-                console.error(err);
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = originalBtnHtml;
             }
         }
 
-        // --- SIP.JS LOGIC ---
+        // --- MAIN WEBRTC & SIP ENGINE ---
         document.addEventListener('DOMContentLoaded', () => {
-            // --- Cek & minta izin mikrofon saat halaman dibuka ---
-            async function requestMicPermission() {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-                    stream.getTracks().forEach(t => t.stop()); // langsung stop, cukup minta izin
-                    console.log('[MIC] Izin mikrofon diberikan');
-                } catch (err) {
-                    console.warn('[MIC] Izin mikrofon ditolak:', err.message);
-                    alert("Izin mikrofon diperlukan untuk melakukan panggilan!");
-                }
-            }
-            // Auto-request saat halaman load
-            requestMicPermission();
-
             let ua = null;
             let activeSession = null;
             let registered = false;
+            let callTimerInterval = null;
+            let callSeconds = 0;
+            let incomingChimeInterval = null;
+            let audioCtx = null;
+            let isMuted = false;
+            let isHeld = false;
 
-            // STUN servers + pre-gather ICE candidates untuk kurangi delay
-            // Menggunakan public STUN server agar audio bisa menembus NAT
+            window.activeSipSession = null;
+
+            const btnReg      = document.getElementById('btn_register');
+            const statusText  = document.getElementById('reg_status');
+            const statusDot   = document.getElementById('reg_dot');
+            const callStatus  = document.getElementById('call_status');
+            const callTimer   = document.getElementById('call_timer');
+            const btnCall     = document.getElementById('btn_call');
+            const btnHangup   = document.getElementById('btn_hangup');
+            const targetExt   = document.getElementById('target_ext');
+            const btnBksp     = document.getElementById('btn_backspace');
+            const remoteAudio = document.getElementById('remoteAudio');
+            const incallCtrls = document.getElementById('incall_controls');
+
+            // Microphone permission & pre-warming stream
+            const micBanner = document.getElementById('mic_banner');
+            const micTitle  = document.getElementById('mic_title');
+            const micDesc   = document.getElementById('mic_desc');
+            const btnMic    = document.getElementById('btn_request_mic');
+
+            let isNoiseSuppressionActive = true;
+            let statsVisualizerTimer = null;
+
+            // Standard Clean WebRTC Voice Constraints with Full Native Acoustic Echo Cancellation (AEC)
+            // Critical: Uses browser native AEC3 directly to completely eliminate feedback screeching (nyaring)
+            const audioMediaConstraints = {
+                audio: {
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    autoGainControl: true
+                },
+                video: false
+            };
+
+            // Non-intrusive Live Studio Voice Visualizer using WebRTC Native Stats (0-Interference with AEC)
+            function startStatsVisualizer(session) {
+                stopStatsVisualizer();
+                const micMeterBar = document.getElementById('mic_meter_bar');
+                const gateBadge = document.getElementById('gate_badge');
+                const gateDot = document.getElementById('gate_dot');
+                const gatePing = document.getElementById('gate_ping');
+
+                statsVisualizerTimer = setInterval(async () => {
+                    if (!session || !session.connection || session.connection.connectionState === 'closed') {
+                        stopStatsVisualizer();
+                        return;
+                    }
+                    try {
+                        const stats = await session.connection.getStats();
+                        let audioLevel = 0;
+                        stats.forEach(report => {
+                            if (report.type === 'media-source' && report.kind === 'audio' && typeof report.audioLevel === 'number') {
+                                audioLevel = Math.max(audioLevel, report.audioLevel);
+                            } else if (report.type === 'outbound-rtp' && report.kind === 'audio' && typeof report.audioLevel === 'number') {
+                                audioLevel = Math.max(audioLevel, report.audioLevel);
+                            }
+                        });
+
+                        const percent = Math.min(100, Math.round(audioLevel * 100 * 2.5));
+                        if (micMeterBar) micMeterBar.style.width = percent + '%';
+
+                        if (isNoiseSuppressionActive) {
+                            if (percent > 10) {
+                                if (gateBadge) gateBadge.innerHTML = '<span class="text-emerald-500 font-bold">SUARA JELAS</span>';
+                                if (gateDot) gateDot.className = 'relative inline-flex rounded-full h-2 w-2 bg-emerald-500';
+                                if (gatePing) gatePing.classList.remove('hidden');
+                                if (micMeterBar) micMeterBar.className = 'h-full bg-emerald-500 rounded-full transition-all duration-75';
+                            } else {
+                                if (gateBadge) gateBadge.innerHTML = '<span class="text-slate-400">TEREDAM</span>';
+                                if (gateDot) gateDot.className = 'relative inline-flex rounded-full h-2 w-2 bg-slate-400';
+                                if (gatePing) gatePing.classList.add('hidden');
+                                if (micMeterBar) micMeterBar.className = 'h-full bg-slate-300 dark:bg-slate-600 rounded-full transition-all duration-75';
+                            }
+                        } else {
+                            if (gateBadge) gateBadge.innerHTML = '<span class="text-amber-500 font-bold">MODE ASLI</span>';
+                            if (gateDot) gateDot.className = 'relative inline-flex rounded-full h-2 w-2 bg-amber-500';
+                            if (gatePing) gatePing.classList.add('hidden');
+                            if (micMeterBar) micMeterBar.className = 'h-full bg-amber-500 rounded-full transition-all duration-75';
+                        }
+                    } catch(e) {}
+                }, 150);
+            }
+
+            function stopStatsVisualizer() {
+                if (statsVisualizerTimer) {
+                    clearInterval(statsVisualizerTimer);
+                    statsVisualizerTimer = null;
+                }
+                const micMeterBar = document.getElementById('mic_meter_bar');
+                const gateBadge = document.getElementById('gate_badge');
+                const gateDot = document.getElementById('gate_dot');
+                const gatePing = document.getElementById('gate_ping');
+                if (micMeterBar) micMeterBar.style.width = '0%';
+                if (gateBadge) gateBadge.textContent = 'SIAP';
+                if (gateDot) gateDot.className = 'relative inline-flex rounded-full h-2 w-2 bg-slate-400';
+                if (gatePing) gatePing.classList.add('hidden');
+            }
+
+            window.toggleNoiseSuppression = async function() {
+                isNoiseSuppressionActive = !isNoiseSuppressionActive;
+                updateNoiseSuppressionUI();
+
+                if (activeSession && activeSession.connection) {
+                    const senders = activeSession.connection.getSenders();
+                    for (const sender of senders) {
+                        if (sender.track && sender.track.kind === 'audio') {
+                            try {
+                                await sender.track.applyConstraints({
+                                    echoCancellation: true,
+                                    noiseSuppression: isNoiseSuppressionActive,
+                                    autoGainControl: true
+                                });
+                            } catch(e) {}
+                        }
+                    }
+                }
+            };
+
+            function updateNoiseSuppressionUI() {
+                const btnBadge = document.getElementById('btn_toggle_noise');
+                const incallBtn = document.getElementById('btn_incall_noise');
+                const incallLabel = document.getElementById('incall_noise_label');
+
+                if (isNoiseSuppressionActive) {
+                    if (btnBadge) {
+                        btnBadge.className = 'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold transition cursor-pointer bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20';
+                        btnBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> <span id="noise_label">Peredam Bising: AKTIF</span>';
+                    }
+                    if (incallBtn) {
+                        incallBtn.classList.add('text-emerald-600', 'dark:text-emerald-400');
+                        incallBtn.classList.remove('text-slate-400');
+                        if (incallLabel) incallLabel.textContent = 'Peredam ON';
+                    }
+                } else {
+                    if (btnBadge) {
+                        btnBadge.className = 'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold transition cursor-pointer bg-slate-200/60 dark:bg-white/10 text-slate-500 border border-slate-300 dark:border-white/10 hover:bg-slate-200';
+                        btnBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> <span id="noise_label">Peredam: MATI</span>';
+                    }
+                    if (incallBtn) {
+                        incallBtn.classList.remove('text-emerald-600', 'dark:text-emerald-400');
+                        incallBtn.classList.add('text-slate-400');
+                        if (incallLabel) incallLabel.textContent = 'Peredam OFF';
+                    }
+                }
+            }
+
+            if (btnMic) {
+                btnMic.addEventListener('click', async () => {
+                    try {
+                        const stream = await navigator.mediaDevices.getUserMedia(audioMediaConstraints);
+                        stream.getTracks().forEach(t => t.stop());
+                        if (micBanner) micBanner.style.display = 'none';
+                    } catch (err) {
+                        if (micTitle) micTitle.textContent = 'Izin Mikrofon Ditolak Browser';
+                        if (micDesc) micDesc.textContent = 'Silakan klik icon gembok di URL browser untuk mengizinkan akses microphone.';
+                    }
+                });
+            }
+
+            if (btnBksp && targetExt) {
+                btnBksp.addEventListener('click', () => {
+                    targetExt.value = targetExt.value.slice(0, -1);
+                });
+            }
+
+            // Keyboard support (Press 0-9, Backspace, Enter to call)
+            document.addEventListener('keydown', (e) => {
+                if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName) && document.activeElement !== targetExt) {
+                    return;
+                }
+                if (e.key >= '0' && e.key <= '9' || e.key === '*' || e.key === '#') {
+                    dialDigit(e.key);
+                } else if (e.key === 'Backspace' && document.activeElement !== targetExt) {
+                    targetExt.value = targetExt.value.slice(0, -1);
+                } else if (e.key === 'Enter') {
+                    if (activeSession) {
+                        // In call
+                    } else if (btnCall && !btnCall.disabled) {
+                        btnCall.click();
+                    }
+                }
+            });
+
+            // Instant 0ms ICE Candidate gathering (Direct Host to Asterisk, no STUN timeout)
             const pcConfig = {
-                iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+                iceServers: [],
+                iceCandidatePoolSize: 0,
                 bundlePolicy: 'max-bundle',
                 rtcpMuxPolicy: 'require'
             };
 
-            const btnReg     = document.getElementById('btn_register');
-            const statusText = document.getElementById('reg_status');
-            const callStatus = document.getElementById('call_status');
-            const btnCall    = document.getElementById('btn_call');
-            const btnHangup  = document.getElementById('btn_hangup');
-            const remoteAudio = document.createElement('audio'); // create audio element dynamically
-            remoteAudio.id = 'remoteAudio';
-            remoteAudio.autoplay = true;
-            document.body.appendChild(remoteAudio);
-
-            // Gunakan Web Audio API untuk ringtone agar tidak ada delay loading
-            let audioCtx = null;
-            let ringtoneInterval = null;
-
-            function playRingtone() {
-                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                ringtoneInterval = setInterval(() => {
-                    const osc = audioCtx.createOscillator();
-                    const gain = audioCtx.createGain();
-                    osc.connect(gain);
-                    gain.connect(audioCtx.destination);
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(440, audioCtx.currentTime);
-                    osc.frequency.setValueAtTime(480, audioCtx.currentTime + 0.5);
-                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.0);
-                    osc.start(audioCtx.currentTime);
-                    osc.stop(audioCtx.currentTime + 1.0);
-                }, 1500);
+            function unlockAudioContext() {
+                try {
+                    if (!audioCtx) {
+                        audioCtx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'interactive' });
+                    }
+                    if (audioCtx.state === 'suspended') {
+                        audioCtx.resume();
+                    }
+                    if (remoteAudio) {
+                        remoteAudio.muted = false;
+                        const volSlider = document.getElementById('vol_slider');
+                        remoteAudio.volume = volSlider ? parseFloat(volSlider.value) : 1.0;
+                    }
+                } catch(e) {}
             }
 
-            function stopRingtone() {
-                if (ringtoneInterval) { clearInterval(ringtoneInterval); ringtoneInterval = null; }
-            }
+            // In-Call Controls
+            window.toggleMute = function() {
+                if (!activeSession) return;
+                const muteLabel = document.getElementById('mute_label');
 
-            // Enable JsSIP verbose logs for debugging
-            JsSIP.debug.enable('JsSIP:*');
-            // Override console.log to show on page
+                if (isMuted) {
+                    activeSession.unmute({ audio: true });
+                    isMuted = false;
+                    if (muteLabel) muteLabel.textContent = 'Mute Mic';
+                } else {
+                    activeSession.mute({ audio: true });
+                    isMuted = true;
+                    if (muteLabel) muteLabel.textContent = 'Unmute Mic';
+                }
+            };
+
+            window.toggleHold = function() {
+                if (!activeSession) return;
+                const holdLabel = document.getElementById('hold_label');
+
+                if (isHeld) {
+                    activeSession.unhold();
+                    isHeld = false;
+                    if (holdLabel) holdLabel.textContent = 'Hold';
+                    if (callStatus) callStatus.textContent = 'Panggilan Berlangsung';
+                } else {
+                    activeSession.hold();
+                    isHeld = true;
+                    if (holdLabel) holdLabel.textContent = 'Resume';
+                    if (callStatus) callStatus.textContent = 'Panggilan Ditahan (On Hold)';
+                }
+            };
+
+            // Debug Logging Hook
+            if (window.JsSIP) {
+                JsSIP.debug.enable('JsSIP:*');
+            }
             const logArea = document.getElementById('sip_log');
-            if (logArea) logArea.innerHTML = ''; // clear initial text
             const origLog = console.log.bind(console);
-            const origError = console.error.bind(console);
+            const origErr = console.error.bind(console);
+
             function appendLog(type, args) {
                 if (!logArea) return;
                 const msg = Array.from(args).map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' ');
-                if (msg.includes('JsSIP') || msg.includes('SIP') || msg.includes('DEBUG')) {
+                if (msg.includes('JsSIP') || msg.includes('SIP') || msg.includes('WEBRTC')) {
                     const line = document.createElement('p');
-                    line.style.color = type === 'error' ? '#f87171' : '#86efac';
-                    line.textContent = '> [' + type + '] ' + msg.substring(0, 300);
+                    line.style.color = type === 'error' ? '#ef4444' : (type === 'warn' ? '#eab308' : '#10b981');
+                    line.textContent = '> [' + type + '] ' + msg.substring(0, 180);
                     logArea.appendChild(line);
                     logArea.scrollTop = logArea.scrollHeight;
                 }
             }
-            console.log  = (...args) => { origLog(...args);   appendLog('log', args); };
-            console.error = (...args) => { origError(...args); appendLog('ERR', args); };
+            console.log   = (...args) => { origLog(...args); appendLog('log', args); };
+            console.error = (...args) => { origErr(...args); appendLog('error', args); };
 
-            function setStatus(msg, color) {
-                statusText.innerHTML = '<span style="color:' + color + '">' + msg + '</span>';
+            function setRegStatus(text, color, dotColor) {
+                if (statusText) {
+                    statusText.textContent = text;
+                    statusText.style.color = color;
+                }
+                if (statusDot) {
+                    statusDot.style.backgroundColor = dotColor || color;
+                }
             }
 
+            // Gentle melodious chime for INCOMING calls only (no loud screaming tones)
+            function playIncomingChime() {
+                try {
+                    unlockAudioContext();
+                    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    if (incomingChimeInterval) return;
+
+                    const playChime = () => {
+                        if (!audioCtx) return;
+                        const t = audioCtx.currentTime;
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(523.25, t); // C5 note
+                        osc.frequency.setValueAtTime(659.25, t + 0.15); // E5 note
+                        gain.gain.setValueAtTime(0.03, t);
+                        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        osc.start(t);
+                        osc.stop(t + 0.6);
+                    };
+
+                    playChime();
+                    incomingChimeInterval = setInterval(playChime, 2500);
+                } catch(e) {}
+            }
+
+            function stopIncomingChime() {
+                if (incomingChimeInterval) {
+                    clearInterval(incomingChimeInterval);
+                    incomingChimeInterval = null;
+                }
+            }
+
+            function startTimer() {
+                stopTimer();
+                callSeconds = 0;
+                if (callTimer) {
+                    callTimer.classList.remove('hidden');
+                    callTimer.textContent = '00:00';
+                }
+                callTimerInterval = setInterval(() => {
+                    callSeconds++;
+                    const m = String(Math.floor(callSeconds / 60)).padStart(2, '0');
+                    const s = String(callSeconds % 60).padStart(2, '0');
+                    if (callTimer) callTimer.textContent = `${m}:${s}`;
+                }, 1000);
+            }
+
+            function stopTimer() {
+                if (callTimerInterval) {
+                    clearInterval(callTimerInterval);
+                    callTimerInterval = null;
+                }
+                if (callTimer) callTimer.classList.add('hidden');
+            }
+
+            function logWebRtcCall(caller, recipient, duration, status) {
+                try {
+                    fetch('{{ route("webrtc.history.log") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            caller: caller || 'Unknown',
+                            recipient: recipient || 'Unknown',
+                            duration: duration || '00:00',
+                            status: status || 'Answered'
+                        })
+                    }).catch(() => {});
+                } catch(e) {}
+            }
+
+            let boundStreamId = null;
+
+            function stopAllAudioStreams() {
+                stopStatsVisualizer();
+            }
+
+            function resetCallUI() {
+                stopTimer();
+                stopIncomingChime();
+                stopStatsVisualizer();
+                isMuted = false;
+                isHeld = false;
+
+                if (incallCtrls) incallCtrls.classList.add('hidden');
+                if (remoteAudio) {
+                    try {
+                        remoteAudio.pause();
+                        remoteAudio.srcObject = null;
+                    } catch(e) {}
+                }
+
+                const badge = document.getElementById('call_status_badge');
+                if (badge) {
+                    badge.textContent = registered ? 'Ready' : 'Offline';
+                    badge.className = registered ? 'px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-200/60 dark:bg-white/10 text-slate-600 dark:text-slate-300';
+                }
+
+                if (callStatus) callStatus.textContent = registered ? 'Ready to call' : 'Offline';
+                if (btnCall) {
+                    btnCall.style.opacity = '1';
+                    btnCall.style.pointerEvents = 'auto';
+                }
+                if (btnHangup) {
+                    btnHangup.style.opacity = '0.3';
+                    btnHangup.style.pointerEvents = 'none';
+                }
+            }
+
+            // Register & Connect Action
             btnReg.addEventListener('click', () => {
-                if (registered) {
-                    ua.stop();
+                unlockAudioContext();
+
+                if (registered && ua) {
+                    try { ua.stop(); } catch(e) {}
                     registered = false;
-                    setStatus('Offline', '#64748b');
-                    btnReg.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg> Connect & Register';
-                    btnReg.style.background = '#2f6bfd';
+                    stopAllAudioStreams();
+                    setRegStatus('Offline', '#64748b', '#64748b');
+                    btnReg.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg> <span>Connect & Register</span>';
+                    resetCallUI();
                     return;
                 }
 
@@ -350,130 +961,231 @@
                 const pass   = document.getElementById('sip_password').value.trim();
 
                 if (!ws || !domain || !ext || !pass) {
-                    setStatus('Isi semua kolom terlebih dahulu!', '#ef4444');
+                    setRegStatus('Isi data lengkap!', '#ef4444', '#ef4444');
                     return;
                 }
 
-                setStatus('Mencoba koneksi ke WebSocket...', '#eab308');
+                setRegStatus('Connecting...', '#eab308', '#eab308');
                 btnReg.disabled = true;
-                btnReg.textContent = 'Connecting...';
+                btnReg.innerHTML = '<span>Connecting...</span>';
 
                 try {
                     const socket = new JsSIP.WebSocketInterface(ws);
-
                     const configuration = {
-                        sockets      : [socket],
-                        uri          : 'sip:' + ext + '@' + domain,
-                        authorization_user: ext,
-                        display_name : ext,
-                        password     : pass,
-                        // realm        : domain,   // Di-comment sementara: biarkan JsSIP mendeteksi realm otomatis dari server Asterisk
-                        register     : true,
-                        register_expires : 300,
+                        sockets            : [socket],
+                        uri                : 'sip:' + ext + '@' + domain,
+                        authorization_user : ext,
+                        display_name       : ext,
+                        password           : pass,
+                        register           : true,
+                        register_expires   : 120,
                         connection_recovery_min_interval: 2,
                         connection_recovery_max_interval: 30,
-                        pcConfig     : pcConfig,
+                        pcConfig           : pcConfig,
                     };
 
+                    if (ua) { try { ua.stop(); } catch(e) {} }
+
                     ua = new JsSIP.UA(configuration);
+                    window.sipUA = ua;
 
-                    ua.on('connecting', () => {
-                        setStatus('Menghubungkan ke WebSocket...', '#eab308');
-                    });
-
-                    ua.on('connected', () => {
-                        setStatus('WebSocket terhubung! Mendaftarkan ekstensi...', '#eab308');
-                    });
+                    ua.on('connecting', () => setRegStatus('Connecting WS...', '#eab308', '#eab308'));
+                    ua.on('connected',  () => setRegStatus('WS OK! Registering...', '#eab308', '#eab308'));
 
                     ua.on('disconnected', (e) => {
                         registered = false;
-                        const reason = e.error ? ('Error: ' + e.error) : 'WebSocket terputus.';
-                        const detail = e.code ? ' (Code ' + e.code + ')' : '';
-                        setStatus(reason + detail + ' Pastikan port 8088 terbuka.', '#ef4444');
+                        setRegStatus(e.error ? ('Error: ' + e.error) : 'WS Terputus', '#ef4444', '#ef4444');
                         btnReg.disabled = false;
-                        btnReg.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg> Connect & Register';
-                        btnReg.style.background = '#2f6bfd';
+                        btnReg.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg> <span>Connect & Register</span>';
+                        resetCallUI();
                     });
 
                     ua.on('registered', () => {
                         registered = true;
                         btnReg.disabled = false;
-                        setStatus('Terhubung sebagai ekstensi ' + ext, '#10b981');
-                        btnReg.textContent = 'Disconnect';
-                        btnReg.style.background = '#ef4444';
+                        setRegStatus('Connected: ' + ext, '#10b981', '#10b981');
+                        btnReg.innerHTML = '<span>Disconnect</span>';
+                        if (callStatus) callStatus.textContent = 'Ready to call';
+                        const badge = document.getElementById('call_status_badge');
+                        if (badge) {
+                            badge.textContent = 'Ready';
+                            badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400';
+                        }
                     });
 
                     ua.on('unregistered', () => {
                         registered = false;
-                        setStatus('Registrasi dibatalkan.', '#64748b');
+                        setRegStatus('Offline', '#64748b', '#64748b');
                         btnReg.disabled = false;
-                        btnReg.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg> Connect & Register';
-                        btnReg.style.background = '#2f6bfd';
+                        btnReg.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg> <span>Connect & Register</span>';
+                        resetCallUI();
                     });
 
                     ua.on('registrationFailed', (e) => {
                         registered = false;
-                        const cause = e.cause || 'Unknown';
-                        const status = e.response ? e.response.status_code : '';
-                        setStatus('Registrasi GAGAL: ' + cause + (status ? ' (HTTP ' + status + ')' : '') + '. Periksa Extension & Password.', '#ef4444');
+                        setRegStatus('Gagal: ' + (e.cause || 'Auth Failed'), '#ef4444', '#ef4444');
                         btnReg.disabled = false;
-                        btnReg.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg> Connect & Register';
-                        btnReg.style.background = '#2f6bfd';
+                        btnReg.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg> <span>Connect & Register</span>';
+                        resetCallUI();
                     });
 
+                    // Inbound / Outbound Calls
                     ua.on('newRTCSession', (data) => {
                         const session = data.session;
+                        unlockAudioContext();
+                        window.activeSipSession = session;
 
-                        // --- FIX: Filter mDNS (.local/.invalid) ICE candidates ---
-                        session.on('peerconnection', (pcData) => {
-                            const pc = pcData.peerconnection;
-                            pc.addEventListener('icecandidate', (event) => {
-                                if (event.candidate && (
-                                    event.candidate.candidate.indexOf('.local') !== -1 ||
-                                    event.candidate.candidate.indexOf('.invalid') !== -1
-                                )) {
-                                    event.stopImmediatePropagation();
+                        // Clean, stable WebRTC Remote Audio Stream Binding
+                        // Attached once to preserve Chrome's native AEC3 acoustic echo cancellation pipeline
+                        function setupRemoteAudio(pc) {
+                            if (!pc || pc.__audioHooked) return;
+                            pc.__audioHooked = true;
+
+                            pc.ontrack = (event) => {
+                                if (!remoteAudio) return;
+                                const stream = (event.streams && event.streams[0]) ? event.streams[0] : new MediaStream([event.track]);
+                                if (remoteAudio.srcObject !== stream) {
+                                    remoteAudio.srcObject = stream;
+                                    remoteAudio.muted = false;
+                                    const volSlider = document.getElementById('vol_slider');
+                                    remoteAudio.volume = volSlider ? parseFloat(volSlider.value) : 0.65;
+                                    remoteAudio.play().catch(() => {});
                                 }
-                            }, true); 
+                            };
+                        }
+
+                        session.on('peerconnection', (pcData) => {
+                            setupRemoteAudio(pcData.peerconnection);
                         });
 
-                        if (session.direction === 'incoming') {
-                            callStatus.textContent = 'Panggilan masuk...';
-                            playRingtone();
+                        if (session.connection) {
+                            setupRemoteAudio(session.connection);
+                        }
 
-                            btnCall.onclick = () => {
-                                session.answer({
-                                    mediaConstraints: { audio: true, video: false },
-                                    pcConfig: pcConfig
-                                });
-                                stopRingtone();
-                            };
-                            btnHangup.onclick = () => {
-                                session.terminate();
-                                stopRingtone();
-                            };
+                        if (session.direction === 'incoming') {
+                            const caller = session.remote_identity ? session.remote_identity.uri.user : 'Unknown';
+                            if (callStatus) callStatus.textContent = 'Panggilan masuk dari ' + caller + '...';
+                            const badge = document.getElementById('call_status_badge');
+                            if (badge) {
+                                badge.textContent = 'Incoming Call';
+                                badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500 text-white animate-pulse';
+                            }
+                            playIncomingChime();
+
                             btnCall.style.opacity = '1';
                             btnCall.style.pointerEvents = 'auto';
                             btnHangup.style.opacity = '1';
                             btnHangup.style.pointerEvents = 'auto';
+
+                            btnCall.onclick = () => {
+                                stopIncomingChime();
+                                unlockAudioContext();
+                                session.answer({
+                                    mediaConstraints: audioMediaConstraints,
+                                    pcConfig: pcConfig
+                                });
+                            };
+
+                            btnHangup.onclick = () => {
+                                stopIncomingChime();
+                                session.terminate();
+                                resetCallUI();
+                            };
                         }
 
-                        session.on('accepted',  () => { callStatus.textContent = 'Panggilan berlangsung...'; stopRingtone(); });
-                        session.on('confirmed', () => { callStatus.textContent = 'Panggilan berlangsung...'; stopRingtone(); });
-                        session.on('ended',     () => { callStatus.textContent = 'Panggilan berakhir.'; stopRingtone(); resetButtons(); activeSession = null; });
-                        session.on('failed',    (e) => {
-                            const code   = (e.message && e.message.status_code) ? e.message.status_code : '';
-                            const reason = (e.message && e.message.reason_phrase) ? e.message.reason_phrase : (e.cause || 'Unknown');
-                            callStatus.textContent = 'Panggilan gagal: ' + (code ? '[' + code + '] ' : '') + reason;
-                            stopRingtone(); resetButtons(); activeSession = null;
+                        session.on('connecting', () => {
+                            if (session.direction === 'outgoing') {
+                                if (callStatus) callStatus.textContent = 'Mengirim sinyal panggil ke ' + (targetExt?.value.trim() || 'tujuan') + '...';
+                            }
                         });
 
-                        if (session.connection) {
-                            session.connection.addEventListener('track', (e) => {
-                                remoteAudio.srcObject = e.streams[0];
+                        session.on('progress', () => {
+                            if (session.direction === 'outgoing') {
+                                if (callStatus) callStatus.textContent = 'Berdering (Ringing)...';
+                                const badge = document.getElementById('call_status_badge');
+                                if (badge) {
+                                    badge.textContent = 'Ringing...';
+                                    badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500 text-white animate-pulse';
+                                }
+                            }
+                        });
+
+                        session.on('accepted', () => {
+                            stopIncomingChime();
+                            unlockAudioContext();
+                            if (remoteAudio && remoteAudio.paused) {
                                 remoteAudio.play().catch(() => {});
-                            });
-                        }
+                            }
+                            if (callStatus) callStatus.textContent = 'Panggilan Berlangsung';
+                            const badge = document.getElementById('call_status_badge');
+                            if (badge) {
+                                badge.textContent = 'In Call';
+                                badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500 text-white';
+                            }
+                            if (incallCtrls) incallCtrls.classList.remove('hidden');
+                            startTimer();
+                            startStatsVisualizer(session);
+
+                            btnCall.style.opacity = '0.3';
+                            btnCall.style.pointerEvents = 'none';
+                            btnHangup.style.opacity = '1';
+                            btnHangup.style.pointerEvents = 'auto';
+                            btnHangup.onclick = () => {
+                                session.terminate();
+                            };
+                        });
+
+                        session.on('confirmed', () => {
+                            stopIncomingChime();
+                            unlockAudioContext();
+                            if (remoteAudio && remoteAudio.paused) {
+                                remoteAudio.play().catch(() => {});
+                            }
+                            startStatsVisualizer(session);
+                        });
+
+                        session.on('ended', () => {
+                            stopStatsVisualizer();
+                            if (callStatus) callStatus.textContent = 'Panggilan Berakhir';
+                            const m = String(Math.floor(callSeconds / 60)).padStart(2, '0');
+                            const s = String(callSeconds % 60).padStart(2, '0');
+                            const finalDuration = `${m}:${s}`;
+                            const myExt = document.getElementById('sip_extension')?.value.trim() || '{{ auth()->user()->asterisk_exten ?? "User" }}';
+                            const remoteUser = (session.remote_identity && session.remote_identity.uri) ? session.remote_identity.uri.user : (targetExt?.value.trim() || 'Unknown');
+                            const caller = session.direction === 'incoming' ? remoteUser : myExt;
+                            const recipient = session.direction === 'incoming' ? myExt : remoteUser;
+                            logWebRtcCall(caller, recipient, finalDuration, 'Answered');
+
+                            resetCallUI();
+                            activeSession = null;
+                            window.activeSipSession = null;
+                        });
+
+                        session.on('failed', (e) => {
+                            stopStatsVisualizer();
+                            let reason = e.cause || 'Gagal Terhubung';
+                            if (reason === 'Unavailable' || reason === 'Temporarily Unavailable') reason = 'Tujuan Offline / Tidak Aktif';
+                            else if (reason === 'Busy') reason = 'Tujuan Sedang Sibuk';
+                            else if (reason === 'Rejected') reason = 'Panggilan Ditolak';
+                            else if (reason === 'Not Found') reason = 'Nomor Tidak Terdaftar';
+
+                            const myExt = document.getElementById('sip_extension')?.value.trim() || '{{ auth()->user()->asterisk_exten ?? "User" }}';
+                            const remoteUser = (session.remote_identity && session.remote_identity.uri) ? session.remote_identity.uri.user : (targetExt?.value.trim() || 'Unknown');
+                            const caller = session.direction === 'incoming' ? remoteUser : myExt;
+                            const recipient = session.direction === 'incoming' ? myExt : remoteUser;
+                            logWebRtcCall(caller, recipient, '00:00', reason);
+
+                            if (callStatus) callStatus.textContent = reason;
+                            const badge = document.getElementById('call_status_badge');
+                            if (badge) {
+                                badge.textContent = reason;
+                                badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-red-500 text-white';
+                            }
+
+                            setTimeout(() => { resetCallUI(); }, 3500);
+                            activeSession = null;
+                            window.activeSipSession = null;
+                        });
 
                         activeSession = session;
                     });
@@ -481,72 +1193,97 @@
                     ua.start();
 
                 } catch (err) {
-                    setStatus('ERROR: ' + err.message, '#ef4444');
+                    setRegStatus('Error: ' + err.message, '#ef4444', '#ef4444');
                     btnReg.disabled = false;
-                    btnReg.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg> Connect & Register';
+                    btnReg.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg> <span>Connect & Register</span>';
                 }
             });
 
+            // Call Button Click (Direct Instant Call with Native WebRTC Constraints)
             btnCall.addEventListener('click', () => {
-                if (!registered) { alert('Daftarkan ekstensi terlebih dahulu!'); return; }
-
-                if (activeSession) {
-                    try { activeSession.terminate(); } catch(e) {}
-                    activeSession = null;
-                    resetButtons();
-                    callStatus.textContent = 'Ready to call';
+                unlockAudioContext();
+                if (!registered || !ua) {
+                    btnReg.click();
+                    setTimeout(() => {
+                        if (registered) btnCall.click();
+                    }, 1200);
                     return;
                 }
 
-                const targetExtInput = document.getElementById('target_ext');
-                if (!targetExtInput) return;
-                
-                const target = targetExtInput.value.trim();
+                const target = targetExt ? targetExt.value.trim() : '';
                 if (!target) {
-                    alert('Masukkan nomor ekstensi tujuan!');
+                    if (callStatus) callStatus.textContent = 'Ketik nomor tujuan terlebih dahulu!';
                     return;
                 }
 
-                const domain = document.getElementById('sip_domain').value.trim().split(':')[0];
-                
-                callStatus.textContent = 'Memanggil ' + target + '...';
+                const domain = document.getElementById('sip_domain').value.trim();
+                const targetURI = 'sip:' + target + '@' + domain;
+
+                if (callStatus) callStatus.textContent = 'Menghubungkan ke ' + target + '...';
+                const badge = document.getElementById('call_status_badge');
+                if (badge) {
+                    badge.textContent = 'Calling...';
+                    badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500 text-white';
+                }
+
+                btnCall.style.opacity = '0.3';
+                btnCall.style.pointerEvents = 'none';
+                btnHangup.style.opacity = '1';
+                btnHangup.style.pointerEvents = 'auto';
+
+                const options = {
+                    mediaConstraints: audioMediaConstraints,
+                    pcConfig: pcConfig,
+                    rtcOfferConstraints: {
+                        offerToReceiveAudio: 1,
+                        offerToReceiveVideo: 0
+                    }
+                };
+
                 try {
-                    activeSession = ua.call('sip:' + target + '@' + domain, {
-                        mediaConstraints: { audio: true, video: false },
-                        pcConfig: pcConfig
-                    });
-                    btnCall.style.opacity = '0.5';
-                    btnCall.style.pointerEvents = 'none';
-                    btnHangup.style.opacity = '1';
-                    btnHangup.style.pointerEvents = 'auto';
-                    btnHangup.onclick = () => { if (activeSession) activeSession.terminate(); };
+                    const session = ua.call(targetURI, options);
+                    activeSession = session;
+                    window.activeSipSession = session;
+
+                    btnHangup.onclick = () => {
+                        session.terminate();
+                        resetCallUI();
+                    };
                 } catch (err) {
-                    callStatus.textContent = 'Gagal memanggil: ' + err.message;
-                    activeSession = null;
+                    if (callStatus) callStatus.textContent = 'Error: ' + err.message;
+                    resetCallUI();
                 }
             });
 
-            function resetButtons() {
-                btnCall.style.opacity = '1';
-                btnCall.style.pointerEvents = 'auto';
-                btnCall.onclick = null;
-                btnHangup.style.opacity = '0.5';
-                btnHangup.style.pointerEvents = 'none';
+            // Password eye toggle
+            const togglePassBtn = document.getElementById('toggle_password');
+            const passInput = document.getElementById('sip_password');
+            if (togglePassBtn && passInput) {
+                togglePassBtn.addEventListener('click', () => {
+                    passInput.type = passInput.type === 'password' ? 'text' : 'password';
+                });
             }
 
-            // Show/Hide Password Logic
-            document.getElementById('toggle_password').addEventListener('click', function() {
-                const pwdInput = document.getElementById('sip_password');
-                const eyeIcon = document.getElementById('eye_icon');
-                if (pwdInput.type === 'password') {
-                    pwdInput.type = 'text';
-                    eyeIcon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
-                } else {
-                    pwdInput.type = 'password';
-                    eyeIcon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+            // Pre-warm audio on first user gesture anywhere on keypad or document
+            const prewarmHandler = () => {
+                unlockAudioContext();
+                document.removeEventListener('click', prewarmHandler);
+                document.removeEventListener('keydown', prewarmHandler);
+            };
+            document.addEventListener('click', prewarmHandler, { once: true });
+            document.addEventListener('keydown', prewarmHandler, { once: true });
+
+            // Auto-connect SIP on page load if credentials exist
+            setTimeout(() => {
+                if (!registered && btnReg && !btnReg.disabled) {
+                    const ws = document.getElementById('sip_ws')?.value.trim();
+                    const ext = document.getElementById('sip_extension')?.value.trim();
+                    const pass = document.getElementById('sip_password')?.value.trim();
+                    if (ws && ext && pass) {
+                        btnReg.click();
+                    }
                 }
-            });
+            }, 600);
         });
     </script>
-</body>
-</html>
+@endpush
