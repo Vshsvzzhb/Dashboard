@@ -2,345 +2,368 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
-use App\Models\Contact;
+use App\Http\Controllers\MessageTemplateController;
+use App\Http\Controllers\BlacklistController;
+use App\Http\Controllers\MediaLibraryController;
+use App\Http\Controllers\LinkTrackerController;
+use App\Http\Controllers\ContactController;
+use App\Http\Controllers\PipelineController;
+use App\Http\Controllers\AutoResponderController;
+use App\Http\Controllers\VoipUserController;
+use App\Http\Controllers\SmsProviderController;
+use App\Http\Controllers\TtsCallController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\TeamController;
+use App\Http\Controllers\QuickBlastController;
+use App\Http\Controllers\PhonebookController;
+use App\Http\Controllers\CampaignController;
+use App\Http\Controllers\SmsCampaignController;
+use App\Http\Controllers\TtsCampaignController;
+use App\Http\Controllers\WaGroupController;
+use App\Http\Controllers\SettingController;
+use App\Http\Controllers\ProfileController;
 
 /*
 |--------------------------------------------------------------------------
-| Authentication Routes
+| Authentication Routes (Guest only)
 |--------------------------------------------------------------------------
 */
-Route::get('/', function () {
-    return view('login');
-})->name('login.page');
+Route::get('/landing', function () {
+    return view('landing');
+})->name('landing');
 
-Route::get('/login', function () {
-    return redirect()->route('login.page');
+// Public blog routes
+Route::get('/blog/{slug}', function (string $slug) {
+    $posts = config('blog.posts', []);
+    $post  = collect($posts)->firstWhere('slug', $slug);
+    if (!$post) abort(404);
+    $related = collect($posts)->where('slug', '!=', $slug)->take(2)->values()->all();
+    return view('blog-post', compact('post', 'related'));
+})->name('blog.post');
+
+Route::get('/blog', function () {
+    return redirect(url('/') . '#blog');
+})->name('blog.index');
+
+
+Route::middleware(['guest', 'throttle:30,1'])->group(function () {
+    Route::get('/', function () {
+        return response(view('landing'))
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate')
+            ->header('Pragma', 'no-cache');
+    });
+
+    Route::get('/login', function () {
+        return response(view('login'))
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate')
+            ->header('Pragma', 'no-cache');
+    })->name('login.page');
+
+    Route::get('/register', function () { return redirect()->route('login.page'); });
+    Route::post('/login', [AuthController::class, 'login'])->name('login');
+    Route::post('/register', [AuthController::class, 'register'])->name('register');
+    Route::get('/verify-otp', [AuthController::class, 'showOtpForm'])->name('verify-otp');
+    Route::post('/verify-otp', [AuthController::class, 'verifyOtp'])->name('verify-otp.process');
+    Route::post('/resend-otp', [AuthController::class, 'resendOtp'])->name('resend-otp');
+
+    // Forgot Password & Reset via OTP
+    Route::get('/forgot-password', [AuthController::class, 'showForgotPasswordForm'])->name('password.request');
+    Route::post('/forgot-password', [AuthController::class, 'sendResetOtp'])->name('password.email');
+    Route::get('/reset-password-otp', [AuthController::class, 'showResetPasswordOtpForm'])->name('password.reset.otp');
+    Route::post('/reset-password-otp', [AuthController::class, 'resetPasswordWithOtp'])->name('password.update.otp');
+    Route::post('/resend-reset-otp', [AuthController::class, 'resendResetOtp'])->name('password.resend.otp');
 });
 
-Route::post('/login', [AuthController::class, 'login'])->name('login');
-Route::post('/register', [AuthController::class, 'register'])->name('register');
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+// Public Tracked Link Redirect
+Route::get('/r/{code}', [LinkTrackerController::class, 'redirect'])->name('links.redirect');
+
+Route::match(['GET', 'POST'], '/logout', [AuthController::class, 'logout'])->name('logout');
 
 /*
 |--------------------------------------------------------------------------
-| Dashboard & Navigation Routes
+| Dashboard & Navigation Routes (Auth required)
 |--------------------------------------------------------------------------
 */
+Route::middleware('auth')->group(function () {
 
-// Dashboard dengan Data Realtime & Chart.js
-Route::get('/dashboard', function () {
-    $waContacts = class_exists(\App\Models\Contact::class) ? \App\Models\Contact::where('type', 'wa')->count() : 0;
-    $smsContacts = class_exists(\App\Models\Contact::class) ? \App\Models\Contact::where('type', 'sms')->count() : 0;
-    $totalContacts = $waContacts + $smsContacts;
+    // Dashboard
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/fetch-devices', [DashboardController::class, 'fetchDevicesStatus'])->name('dashboard.fetch-devices');
 
-    // Data aktivitas mingguan untuk Chart.js (S, M, T, W, T, F, S)
-    $weeklyData = [0, 0, 0, 0, 0, 0, 0];
-    if (class_exists(\App\Models\Blast::class)) {
-        $blasts = \App\Models\Blast::where('created_at', '>=', now()->startOfWeek(0))->get();
-        foreach ($blasts as $blast) {
-            $dayOfWeek = $blast->created_at->dayOfWeek; // 0 (Sunday) to 6 (Saturday)
-            // Add total recipients to that day
-            $weeklyData[$dayOfWeek] += $blast->total;
-        }
-    }
+    // Team Management (Role-Based Access Control) - Owner only
+    Route::middleware('role:owner')->group(function () {
+        Route::get('/team', [TeamController::class, 'index'])->name('team.index');
+        Route::post('/team', [TeamController::class, 'store'])->name('team.store');
+        Route::put('/team/{id}', [TeamController::class, 'update'])->name('team.update');
+        Route::delete('/team/{id}', [TeamController::class, 'destroy'])->name('team.destroy');
+    });
 
-    $recentHistories = class_exists(\App\Models\Blast::class) ? \App\Models\Blast::latest()->take(6)->get() : collect();
+    // Quick Blast (Owner, Manager, Sales)
+    Route::middleware('role:owner,manager,sales')->group(function () {
+        Route::get('/quick-blast', [QuickBlastController::class, 'index'])->name('quick.blast');
+        Route::post('/quick-blast/send', [QuickBlastController::class, 'send'])->name('quick.blast.send');
+        Route::get('/blast-history', function (\Illuminate\Http\Request $request) {
+            $user = \Illuminate\Support\Facades\Auth::user();
+            $ownerId = $user->isOwner() ? $user->id : ($user->parent_id ?? 1);
+            
+            $query = \App\Models\Blast::query();
+            $staffList = collect();
+            $isSupervisor = $user->isOwner() || $user->hasRole('manager');
 
-    return view('dashboard', compact('totalContacts', 'waContacts', 'smsContacts', 'weeklyData', 'recentHistories'));
-})->name('dashboard');
+            if ($isSupervisor) {
+                $teamUserIds = \App\Models\User::where('parent_id', $ownerId)->orWhere('id', $ownerId)->pluck('id')->toArray();
+                $staffList = \App\Models\User::whereIn('id', $teamUserIds)->select('id', 'name', 'role')->get();
 
+                if ($request->filled('staff_id') && in_array((int)$request->staff_id, $teamUserIds)) {
+                    $query->where('user_id', (int)$request->staff_id);
+                } else {
+                    $query->whereIn('user_id', $teamUserIds);
+                }
+            } else {
+                $query->where('user_id', $user->id);
+            }
 
-// Quick Blast Routes
-Route::get('/quick-blast', function () {
-    try {
-        $res = \Illuminate\Support\Facades\Http::timeout(3)->get('http://127.0.0.1:4000/sessions');
-        $waDevices = $res->successful() ? ($res->json('data') ?? []) : [];
-    } catch (\Exception $e) {
+            $total = (clone $query)->count();
+            $sent = (clone $query)->where('status', 'done')->count();
+            $failed = (clone $query)->where('status', 'failed')->count();
+            $stats = compact('total', 'sent', 'failed');
+
+            $blasts = $query->with('user:id,name,role')->latest()->paginate(20)->withQueryString();
+            return view('blast-history', compact('blasts', 'staffList', 'isSupervisor', 'stats'));
+        })->name('blast.history');
+    });
+
+    // WhatsApp Phonebook
+    Route::get('/phonebook', [PhonebookController::class, 'indexWa'])->name('phonebook');
+    Route::post('/phonebook', [PhonebookController::class, 'storeWa'])->name('phonebook.store');
+    Route::delete('/phonebook/{phonebook}', [PhonebookController::class, 'destroyWa'])->name('phonebook.destroy');
+    Route::get('/phonebook/{phonebook}/contacts', [PhonebookController::class, 'contactsWa'])->name('phonebook.contacts');
+    Route::post('/phonebook/{phonebook}/contacts', [PhonebookController::class, 'storeContactWa'])->name('phonebook.contacts.store');
+    Route::delete('/phonebook/{phonebook}/contacts/{contact}', [PhonebookController::class, 'destroyContactWa'])->name('phonebook.contacts.destroy');
+    Route::post('/phonebook/{phonebook}/import', [PhonebookController::class, 'importContacts'])->name('phonebook.contacts.import');
+    Route::get('/phonebook/{phonebook}/export', [PhonebookController::class, 'exportContacts'])->name('phonebook.contacts.export');
+    Route::get('/phonebook/{phonebook}/contacts-json', [PhonebookController::class, 'contactsJson'])->name('phonebook.contacts.json');
+
+    // WA Connect Page (Owner only)
+    Route::middleware('role:owner')->get('/wa-connect', function (\Illuminate\Http\Request $request) {
+        $userId = \Illuminate\Support\Facades\Auth::id();
+        $waEngineUrl = config('services.wa_engine.url');
+        $apiUrl = (request()->isSecure() || !app()->isLocal()) ? '/wa-engine' : $waEngineUrl;
         $waDevices = [];
-    }
-    return view('quick-blast', compact('waDevices'));
-})->name('quick.blast');
+        try {
+            $res = \Illuminate\Support\Facades\Http::connectTimeout(2)->timeout(3)->get($waEngineUrl . '/sessions?user_id=' . $userId);
+            $waDevices = $res->successful() ? ($res->json('data') ?? []) : [];
+        } catch (\Exception $e) {}
+        
+        $session = $request->query('session');
+        if (!$session && !empty($waDevices)) $session = $waDevices[0]['id'];
+        else if (!$session) $session = ($userId == 1 ? 'default' : 'u' . $userId . '_default');
+        return view('wa-connect', compact('apiUrl', 'session', 'waDevices', 'userId'));
+    })->name('wa.connect');
 
+    // Campaigns (Owner, Manager, Sales)
+    Route::middleware('role:owner,manager,sales')->group(function () {
+        Route::get('/campaigns', [CampaignController::class, 'index'])->name('campaigns');
+        Route::post('/campaigns', [CampaignController::class, 'store'])->name('campaigns.store');
+        Route::delete('/campaigns/{campaign}', [CampaignController::class, 'destroy'])->name('campaigns.destroy');
+        Route::patch('/campaigns/{campaign}/toggle', [CampaignController::class, 'toggle'])->name('campaigns.toggle');
+        Route::post('/campaigns/{campaign}/resend', [CampaignController::class, 'resend'])->name('campaigns.resend');
+    });
 
-Route::post('/quick-blast/send', function (\Illuminate\Http\Request $request) {
-    $request->validate([
-        'phone'   => 'required|string',
-        'message' => 'required|string',
-    ]);
+    // WA Groups
+    Route::get('/wa-groups', [WaGroupController::class, 'index'])->name('wa.groups');
+    Route::post('/wa-groups/{groupId}/extract', [WaGroupController::class, 'extract'])->name('wa.groups.extract');
 
-    $phone   = preg_replace('/\D/', '', $request->phone);
-    $message = $request->message;
-    $session = $request->input('session', 'default');
+    // SMS Phonebook
+    Route::get('/phonebook-sms', [PhonebookController::class, 'indexSms'])->name('sms.phonebook');
+    Route::post('/phonebook-sms', [PhonebookController::class, 'storeSms'])->name('sms.phonebook.store');
+    Route::delete('/phonebook-sms/{phonebook}', [PhonebookController::class, 'destroySms'])->name('sms.phonebook.destroy');
+    Route::get('/phonebook-sms/{phonebook}/contacts', [PhonebookController::class, 'contactsSms'])->name('sms.phonebook.contacts');
+    Route::post('/phonebook-sms/{phonebook}/contacts', [PhonebookController::class, 'storeContactSms'])->name('sms.phonebook.contacts.store');
+    Route::delete('/phonebook-sms/{phonebook}/contacts/{contact}', [PhonebookController::class, 'destroyContactSms'])->name('sms.phonebook.contacts.destroy');
+    Route::post('/phonebook-sms/{phonebook}/import', [PhonebookController::class, 'importContacts'])->name('sms.phonebook.contacts.import');
+    Route::get('/phonebook-sms/{phonebook}/export', [PhonebookController::class, 'exportContacts'])->name('sms.phonebook.contacts.export');
 
-    try {
-        $http = \Illuminate\Support\Facades\Http::timeout(10)
-            ->post('http://127.0.0.1:4000/send-message', [
-                'phone'   => $phone,
-                'message' => $message,
-                'session' => $session,
-            ]);
+    // SMS Connect (Owner only)
+    Route::middleware('role:owner')->group(function () {
+        Route::get('/sms-connect', [SmsProviderController::class, 'index'])->name('sms.connect');
+        Route::post('/sms-connect', [SmsProviderController::class, 'store'])->name('sms.connect.store');
+        Route::post('/sms-connect/test', [SmsProviderController::class, 'test'])->name('sms.connect.test');
+    });
 
-        $success = $http->successful() && ($http->json('success') ?? false);
+    // SMS Campaigns (Owner, Manager, Sales)
+    Route::middleware('role:owner,manager,sales')->group(function () {
+        Route::get('/sms-campaigns', [SmsCampaignController::class, 'index'])->name('sms.campaigns');
+        Route::post('/sms-campaigns', [SmsCampaignController::class, 'store'])->name('sms.campaigns.store');
+        Route::delete('/sms-campaigns/{campaign}', [SmsCampaignController::class, 'destroy'])->name('sms.campaigns.destroy');
+        Route::patch('/sms-campaigns/{campaign}/toggle', [SmsCampaignController::class, 'toggle'])->name('sms.campaigns.toggle');
+        Route::post('/sms-campaigns/{campaign}/resend', [SmsCampaignController::class, 'resend'])->name('sms.campaigns.resend');
+    });
+    Route::get('/sms-autoresponder', function () { return redirect()->route('autoresponder.index'); })->name('sms.autoresponder');
 
-        // Simpan ke blast history
-        \App\Models\Blast::create([
-            'message'    => $message,
-            'recipients' => json_encode([$phone]),
-            'total'      => 1,
-            'sent'       => $success ? 1 : 0,
-            'failed'     => $success ? 0 : 1,
-            'status'     => $success ? 'done' : 'failed',
-            'type'       => 'whatsapp',
-            'session'    => $session,
-        ]);
+    // Auto Responder (Owner, Manager, CS)
+    Route::middleware('role:owner,manager,cs')->group(function () {
+        Route::get('/autoresponder', [AutoResponderController::class, 'index'])->name('autoresponder.index');
+        Route::post('/autoresponder', [AutoResponderController::class, 'store'])->name('autoresponder.store');
+        Route::put('/autoresponder/{id}', [AutoResponderController::class, 'update'])->name('autoresponder.update');
+        Route::delete('/autoresponder/{id}', [AutoResponderController::class, 'destroy'])->name('autoresponder.destroy');
+        Route::patch('/autoresponder/{id}/toggle', [AutoResponderController::class, 'toggle'])->name('autoresponder.toggle');
+        Route::post('/autoresponder/test', [AutoResponderController::class, 'testSimulator'])->name('autoresponder.test');
+    });
 
-        if ($success) {
-            return back()->with('success', "Pesan berhasil dikirim ke {$phone}!");
-        }
+    // WebRTC
+    Route::get('/webrtc', function () {
+        $user = \Illuminate\Support\Facades\Auth::user();
+        $voipUsers = collect();
+        $recentCalls = collect();
 
-        $err = $http->json('error') ?? 'Gagal mengirim pesan.';
-        return back()->with('error', $err)->withInput();
+        try {
+            if (class_exists(\App\Models\VoipUser::class)) {
+                $voipUsers = \App\Models\VoipUser::all();
+            }
+        } catch (\Throwable $e) {}
 
-    } catch (\Exception $e) {
-        // Catat kegagalan juga
-        \App\Models\Blast::create([
-            'message'    => $message,
-            'recipients' => json_encode([$phone]),
-            'total'      => 1,
-            'sent'       => 0,
-            'failed'     => 1,
-            'status'     => 'failed',
-            'type'       => 'whatsapp',
-            'session'    => $session,
-        ]);
-        return back()->with('error', 'WA Engine tidak dapat dihubungi. Pastikan wa-engine berjalan di port 4000.')->withInput();
-    }
-})->name('quick.blast.send');
+        try {
+            if (class_exists(\App\Models\WebrtcCall::class) && $user) {
+                $recentCalls = \App\Models\WebrtcCall::where('user_id', $user->id)->latest()->take(6)->get();
+            }
+        } catch (\Throwable $e) {}
 
+        return view('webrtc', compact('voipUsers', 'recentCalls'));
+    })->name('webrtc.phone');
+    Route::get('/webrtc-history', function (\Illuminate\Http\Request $request) {
+        $user = \Illuminate\Support\Facades\Auth::user();
+        $ownerId = $user->isOwner() ? $user->id : ($user->parent_id ?? 1);
+        $isSupervisor = $user->isOwner() || $user->hasRole('manager');
+        $staffList = collect();
 
-Route::get('/blast-history', function () {
-    $blasts = \App\Models\Blast::latest()->paginate(20);
-    return view('blast-history', compact('blasts'));
-})->name('blast.history');
+        if (class_exists(\App\Models\WebrtcCall::class)) {
+            $query = \App\Models\WebrtcCall::query();
+            if ($isSupervisor) {
+                $teamUserIds = \App\Models\User::where('parent_id', $ownerId)->orWhere('id', $ownerId)->pluck('id')->toArray();
+                $staffList = \App\Models\User::whereIn('id', $teamUserIds)->select('id', 'name', 'role', 'asterisk_exten')->get();
 
-// WhatsApp Phonebook Routes
-Route::get('/phonebook', function () {
-    $phonebooks = \App\Models\Phonebook::withCount('contacts')->where('type', 'wa')->latest()->get();
-    return view('phonebook', compact('phonebooks'));
-})->name('phonebook');
-
-Route::post('/phonebook', function (\Illuminate\Http\Request $request) {
-    $request->validate(['name' => 'required|string|max:100', 'description' => 'nullable|string|max:255']);
-    \App\Models\Phonebook::create(['name' => $request->name, 'description' => $request->description, 'type' => 'wa']);
-    return back()->with('success', 'Phonebook berhasil dibuat!');
-})->name('phonebook.store');
-
-Route::delete('/phonebook/{phonebook}', function (\App\Models\Phonebook $phonebook) {
-    $phonebook->contacts()->delete();
-    $phonebook->delete();
-    return back()->with('success', 'Phonebook berhasil dihapus.');
-})->name('phonebook.destroy');
-
-// Contacts per phonebook
-Route::get('/phonebook/{phonebook}/contacts', function (\App\Models\Phonebook $phonebook) {
-    $contacts = $phonebook->contacts()->latest()->get();
-    return view('phonebook-contacts', compact('phonebook', 'contacts'));
-})->name('phonebook.contacts');
-
-Route::post('/phonebook/{phonebook}/contacts', function (\Illuminate\Http\Request $request, \App\Models\Phonebook $phonebook) {
-    $request->validate([
-        'name'  => 'required|string|max:100',
-        'phone' => 'required|string|max:30',
-    ]);
-    $phone = preg_replace('/\D/', '', $request->phone);
-    // Cek duplikat dalam phonebook ini
-    if ($phonebook->contacts()->where('phone', $phone)->exists()) {
-        return back()->with('error', 'Nomor '.$phone.' sudah ada di grup ini.')->withInput();
-    }
-    $phonebook->contacts()->create(['name' => $request->name, 'phone' => $phone, 'type' => 'wa']);
-    return back()->with('success', 'Kontak berhasil ditambahkan!');
-})->name('phonebook.contacts.store');
-
-Route::delete('/phonebook/{phonebook}/contacts/{contact}', function (\App\Models\Phonebook $phonebook, \App\Models\Contact $contact) {
-    abort_if($contact->phonebook_id !== $phonebook->id, 403);
-    $contact->delete();
-    return back()->with('success', 'Kontak dihapus.');
-})->name('phonebook.contacts.destroy');
-
-
-Route::get('/wa-connect', function () {
-    $apiUrl = 'http://' . request()->getHost() . ':4000';
-    return view('wa-connect', compact('apiUrl'));
-})->name('wa.connect');
-
-Route::get('/campaigns', function () {
-    $campaigns  = \App\Models\Campaign::with('phonebook')->latest()->get();
-    $phonebooks = \App\Models\Phonebook::where('type', 'wa')->withCount('contacts')->get();
-    try {
-        $res        = \Illuminate\Support\Facades\Http::timeout(3)->get('http://127.0.0.1:4000/sessions');
-        $waDevices  = $res->successful() ? array_filter($res->json('data') ?? [], fn($d) => $d['connected'] ?? false) : [];
-    } catch (\Exception $e) { $waDevices = []; }
-    return view('campaigns', compact('campaigns', 'phonebooks', 'waDevices'));
-})->name('campaigns');
-
-Route::post('/campaigns', function (\Illuminate\Http\Request $request) {
-    $data = $request->validate([
-        'name'         => 'required|string|max:100',
-        'message'      => 'required|string',
-        'phonebook_id' => 'required|exists:phonebooks,id',
-        'session'      => 'required|string',
-        'scheduled_at' => 'required|date|after:now',
-    ]);
-    $pb = \App\Models\Phonebook::withCount('contacts')->findOrFail($data['phonebook_id']);
-    \App\Models\Campaign::create([
-        ...$data,
-        'target_audience' => $pb->name,
-        'status'          => 'paused',
-        'total_count'     => $pb->contacts_count,
-        'sent_count'      => 0,
-    ]);
-    return back()->with('success', 'Campaign berhasil dijadwalkan!');
-})->name('campaigns.store');
-
-Route::delete('/campaigns/{campaign}', function (\App\Models\Campaign $campaign) {
-    $campaign->delete();
-    return back()->with('success', 'Campaign dihapus.');
-})->name('campaigns.destroy');
-
-Route::patch('/campaigns/{campaign}/toggle', function (\App\Models\Campaign $campaign) {
-    $newStatus = $campaign->status === 'paused' ? 'running' : 'paused';
-    $campaign->update(['status' => $newStatus]);
-    
-    if ($newStatus === 'running') {
-        // Trigger background dispatch so user doesn't have to wait for cron
-        if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
-            pclose(popen('cmd /c start /B php artisan campaign:dispatch > NUL 2>&1', 'r'));
+                if ($request->filled('staff_id') && in_array((int)$request->staff_id, $teamUserIds)) {
+                    $query->where('user_id', (int)$request->staff_id);
+                } else {
+                    $query->whereIn('user_id', $teamUserIds);
+                }
+            } else {
+                $query->where('user_id', $user->id);
+            }
+            $calls = $query->with('user:id,name,role,asterisk_exten')->latest()->paginate(15)->withQueryString();
         } else {
-            exec('php artisan campaign:dispatch > /dev/null 2>&1 &');
+            $calls = collect();
         }
-    }
-    
-    return back()->with('success', 'Status campaign diperbarui.');
-})->name('campaigns.toggle');
 
-
-Route::get('/wa-groups', function (\Illuminate\Http\Request $request) {
-    // Fetch active sessions for device dropdown first
-    try {
-        $res = \Illuminate\Support\Facades\Http::timeout(3)->get('http://127.0.0.1:4000/sessions');
-        $waDevices = $res->successful() ? array_filter($res->json('data') ?? [], fn($d) => $d['connected'] ?? false) : [];
-    } catch (\Exception $e) { $waDevices = []; }
-    
-    // Auto-select first connected device if no session is explicitly requested
-    $session = $request->query('session');
-    if (!$session) {
-        $session = !empty($waDevices) ? array_values($waDevices)[0]['id'] : 'default';
-    }
-
-    try {
-        $res = \Illuminate\Support\Facades\Http::timeout(5)->get("http://127.0.0.1:4000/groups?session={$session}");
-        $groups = $res->successful() ? $res->json('data') ?? [] : [];
-    } catch (\Exception $e) {
-        $groups = [];
-    }
-    
-    return view('wa-groups', compact('groups', 'waDevices', 'session'));
-})->name('wa.groups');
-
-Route::post('/wa-groups/{groupId}/extract', function (\Illuminate\Http\Request $request, $groupId) {
-    $session = $request->input('session', 'default');
-    $groupName = $request->input('group_name', 'Extracted Group');
-    
-    try {
-        $res = \Illuminate\Support\Facades\Http::timeout(15)->get("http://127.0.0.1:4000/groups/{$groupId}/members?session={$session}");
-        if ($res->successful() && $res->json('success')) {
-            $members = $res->json('data') ?? [];
-            if (empty($members)) {
-                return back()->with('error', 'Grup kosong atau gagal mengambil anggota.');
+        if ($request->ajax()) return view('partials.webrtc-table-rows', compact('calls', 'isSupervisor'))->render();
+        return view('webrtc-history', compact('calls', 'staffList', 'isSupervisor'));
+    })->name('webrtc.history');
+    Route::post('/webrtc-history/log', function (\Illuminate\Http\Request $request) {
+        $data = $request->validate([
+            'caller'     => 'required|string|max:50',
+            'recipient'  => 'required|string|max:50',
+            'duration'   => 'required|string|max:20',
+            'status'     => 'required|string|max:50',
+            'transcript' => 'nullable|string',
+        ]);
+        $data['user_id'] = \Illuminate\Support\Facades\Auth::id();
+        $call = \App\Models\WebrtcCall::create($data);
+        return response()->json(['success' => true, 'data' => $call]);
+    })->name('webrtc.history.log');
+    Route::delete('/webrtc-history/clear', function () {
+        $user = \Illuminate\Support\Facades\Auth::user();
+        if (class_exists(\App\Models\WebrtcCall::class)) {
+            if ($user->isOwner()) {
+                $ownerId = $user->id;
+                $teamUserIds = \App\Models\User::where('parent_id', $ownerId)->orWhere('id', $ownerId)->pluck('id')->toArray();
+                \App\Models\WebrtcCall::whereIn('user_id', $teamUserIds)->delete();
+            } else {
+                \App\Models\WebrtcCall::where('user_id', $user->id)->delete();
             }
-            
-            // Buat phonebook baru
-            $pb = \App\Models\Phonebook::create([
-                'name' => 'WA Group: ' . substr($groupName, 0, 80),
-                'description' => 'Diekstrak otomatis dari WA Group (' . count($members) . ' kontak)',
-                'type' => 'wa'
-            ]);
-            
-            // Insert contacts
-            $contacts = [];
-            $now = now();
-            foreach ($members as $m) {
-                // Backward compatibility just in case wa-engine hasn't restarted yet
-                $phoneNum = is_array($m) ? ($m['phone'] ?? '') : $m;
-                $contactName = is_array($m) ? ($m['name'] ?? $phoneNum) : $phoneNum;
-                
-                if (empty($phoneNum)) continue;
-                
-                $contacts[] = [
-                    'phonebook_id' => $pb->id,
-                    'name'         => $contactName, 
-                    'phone'        => $phoneNum,
-                    'type'         => 'wa',
-                    'created_at'   => $now,
-                    'updated_at'   => $now,
-                ];
-            }
-            
-            foreach (array_chunk($contacts, 500) as $chunk) {
-                \App\Models\Contact::insert($chunk);
-            }
-            
-            return redirect()->route('phonebook.contacts', $pb)->with('success', count($members) . ' kontak berhasil diekstrak dan disimpan ke phonebook baru.');
         }
-        return back()->with('error', 'Gagal ekstrak kontak dari wa-engine.');
-    } catch (\Exception $e) {
-        return back()->with('error', 'Koneksi ke wa-engine gagal: ' . $e->getMessage());
-    }
-})->name('wa.groups.extract');
-
-// SMS Gateway Routes
-Route::get('/phonebook-sms', function () {
-    return view('phonebook-sms');
-})->name('sms.phonebook');
-
-Route::get('/sms-connect', function () {
-    return view('sms-connect');
-})->name('sms.connect');
-
-Route::get('/sms-campaigns', function () {
-    return view('sms-campaigns');
-})->name('sms.campaigns');
-
-Route::get('/sms-autoresponder', function () {
-    return view('sms-autoresponder');
-})->name('sms.autoresponder');
-
-// WebRTC Routes
-Route::get('/webrtc', function () {
-    return view('webrtc');
-})->name('webrtc.phone');
-
-Route::get('/webrtc-history', function (\Illuminate\Http\Request $request) {
-    $calls = class_exists(\App\Models\WebrtcCall::class) ? \App\Models\WebrtcCall::latest()->paginate(15) : collect();
+        return back()->with('success', 'Riwayat panggilan berhasil dibersihkan.');
+    })->name('webrtc.history.clear');
     
-    if ($request->ajax()) {
-        return view('partials.webrtc-table-rows', compact('calls'))->render();
-    }
-    
-    return view('webrtc-history', compact('calls'));
-})->name('webrtc.history');
+    Route::post('/tts-call', [TtsCallController::class, 'call']);
 
-Route::delete('/webrtc-history/clear', function () {
-    if (class_exists(\App\Models\WebrtcCall::class)) {
-        \App\Models\WebrtcCall::truncate();
-    }
-    return back()->with('success', 'Call history cleared successfully.');
-})->name('webrtc.history.clear');
+    // TTS Voice Campaigns (Owner, Manager, Sales)
+    Route::middleware('role:owner,manager,sales')->group(function () {
+        Route::get('/tts-campaigns', [TtsCampaignController::class, 'index'])->name('tts.campaigns');
+        Route::post('/tts-campaigns', [TtsCampaignController::class, 'store'])->name('tts.campaigns.store');
+        Route::delete('/tts-campaigns/{campaign}', [TtsCampaignController::class, 'destroy'])->name('tts.campaigns.destroy');
+        Route::patch('/tts-campaigns/{campaign}/toggle', [TtsCampaignController::class, 'toggle'])->name('tts.campaigns.toggle');
+        Route::post('/tts-campaigns/{campaign}/resend', [TtsCampaignController::class, 'resend'])->name('tts.campaigns.resend');
+    });
 
-// TTS Call
-Route::post('/tts-call', [\App\Http\Controllers\TtsCallController::class, 'call']);
+    // VoIP / TTS Phonebook
+    Route::get('/phonebook-tts', [PhonebookController::class, 'indexTts'])->name('tts.phonebook');
+    Route::post('/phonebook-tts', [PhonebookController::class, 'storeTts'])->name('tts.phonebook.store');
+    Route::delete('/phonebook-tts/{phonebook}', [PhonebookController::class, 'destroyTts'])->name('tts.phonebook.destroy');
+    Route::get('/phonebook-tts/{phonebook}/contacts', [PhonebookController::class, 'contactsTts'])->name('tts.phonebook.contacts');
+    Route::post('/phonebook-tts/{phonebook}/contacts', [PhonebookController::class, 'storeContactTts'])->name('tts.phonebook.contacts.store');
+    Route::delete('/phonebook-tts/{phonebook}/contacts/{contact}', [PhonebookController::class, 'destroyContactTts'])->name('tts.phonebook.contacts.destroy');
+    Route::post('/phonebook-tts/{phonebook}/import', [PhonebookController::class, 'importContactsTts'])->name('tts.phonebook.contacts.import');
+    Route::get('/phonebook-tts/{phonebook}/export', [PhonebookController::class, 'exportContacts'])->name('tts.phonebook.contacts.export');
 
-// Settings Route
-Route::get('/settings/gateways', function () {
-    return view('gateways');
-})->name('gateways.settings');
+
+    // VoIP Users (Owner only)
+    Route::middleware('role:owner')->group(function () {
+        Route::get('/voip/users', [VoipUserController::class, 'index'])->name('voip.users.index');
+        Route::post('/voip/users', [VoipUserController::class, 'store'])->name('voip.users.store');
+        Route::delete('/voip/users/{id}', [VoipUserController::class, 'destroy'])->name('voip.users.destroy');
+    });
+
+    // Settings (Owner only)
+    Route::middleware('role:owner')->group(function () {
+        Route::get('/settings/gateways', [SettingController::class, 'gateways'])->name('gateways.settings');
+        Route::post('/settings/gateways/wa', [SettingController::class, 'storeWa'])->name('settings.gateways.wa');
+        Route::post('/settings/gateways/wa/test', [SettingController::class, 'testWa'])->name('settings.gateways.wa.test');
+        Route::post('/settings/gateways/sms', [SettingController::class, 'storeSms'])->name('settings.gateways.sms');
+        Route::post('/settings/gateways/sms/test', [SettingController::class, 'testSms'])->name('settings.gateways.sms.test');
+    });
+
+    // Templates (All roles)
+    Route::get('/templates', [MessageTemplateController::class, 'index'])->name('templates.index');
+    Route::post('/templates', [MessageTemplateController::class, 'store'])->name('templates.store');
+    Route::put('/templates/{template}', [MessageTemplateController::class, 'update'])->name('templates.update');
+    Route::delete('/templates/{template}', [MessageTemplateController::class, 'destroy'])->name('templates.destroy');
+
+    // CRM & Marketing (Owner, Manager, Sales)
+    Route::middleware('role:owner,manager,sales')->group(function () {
+        Route::get('/blacklist', [BlacklistController::class, 'index'])->name('blacklist');
+        Route::post('/blacklist', [BlacklistController::class, 'store'])->name('blacklist.store');
+        Route::patch('/blacklist/{contact}/unblock', [BlacklistController::class, 'unblock'])->name('blacklist.unblock');
+        Route::patch('/blacklist/{contact}/block', [BlacklistController::class, 'block'])->name('blacklist.block');
+
+        Route::get('/media', [MediaLibraryController::class, 'index'])->name('media.index');
+        Route::post('/media', [MediaLibraryController::class, 'store'])->name('media.store');
+        Route::delete('/media/{mediaFile}', [MediaLibraryController::class, 'destroy'])->name('media.destroy');
+
+        Route::get('/link-tracker', [LinkTrackerController::class, 'index'])->name('links.index');
+        Route::post('/link-tracker', [LinkTrackerController::class, 'store'])->name('links.store');
+        Route::delete('/link-tracker/{trackedLink}', [LinkTrackerController::class, 'destroy'])->name('links.destroy');
+
+        Route::get('/leads', [ContactController::class, 'index'])->name('leads.index');
+        Route::patch('/leads/{contact}/score', [ContactController::class, 'updateScore'])->name('leads.update-score');
+        Route::post('/leads/score-all', [ContactController::class, 'recalculateAll'])->name('leads.score-all');
+
+        Route::get('/pipeline', [PipelineController::class, 'index'])->name('pipeline');
+        Route::patch('/pipeline/{contact}', [PipelineController::class, 'update'])->name('pipeline.update');
+        Route::post('/pipeline/add', [PipelineController::class, 'add'])->name('pipeline.add');
+    });
+
+    Route::get('/contacts/{contact}', [ContactController::class, 'show'])->name('contacts.show');
+    Route::patch('/contacts/{contact}/labels', [ContactController::class, 'updateLabels'])->name('contacts.labels');
+
+    // Profile & Security Settings
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+    Route::put('/profile/sip', [ProfileController::class, 'updateSip'])->name('profile.sip');
+    Route::post('/profile/logout-other-devices', [ProfileController::class, 'logoutOtherDevices'])->name('profile.logout-other');
+});
+
+// Public Routes
+Route::get('/r/{code}', [LinkTrackerController::class, 'redirect'])->name('links.redirect');
+Route::get('/autoresponder-check', [AutoResponderController::class, 'apiCheck']);
